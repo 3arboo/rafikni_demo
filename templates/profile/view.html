@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الملف الشخصي - {{ profile.user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Profile Card -->
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    {% if profile.profile_image %}
+                        <img src="{{ profile.profile_image.url }}" 
+                             class="rounded-circle mb-3" 
+                             width="150" 
+                             height="150"
+                             alt="صورة الملف الشخصي">
+                    {% else %}
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3" 
+                             style="width: 150px; height: 150px; margin: 0 auto;">
+                            <i class="fas fa-user fa-3x text-secondary"></i>
+                        </div>
+                    {% endif %}
+                    <h4>{{ profile.user.get_full_name|default:profile.user.username }}</h4>
+                    <p class="text-muted">{{ profile.user.email }}</p>
+                    <a href="{% url 'edit_profile' %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i> تعديل الملف
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Profile Details -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">معلومات الملف الشخصي</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>الاسم الكامل:</h6>
+                            <p>{{ profile.user.get_full_name|default:"غير محدد" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>رقم الهاتف:</h6>
+                            <p>{{ profile.user.phone|default:"غير محدد" }}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h6>نبذة عني:</h6>
+                            <p>{{ profile.bio|default:"لا توجد معلومات" }}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>العنوان:</h6>
+                            <p>{{ profile.address|default:"غير محدد" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>الموقع الإلكتروني:</h6>
+                            <p>
+                                {% if profile.website %}
+                                    <a href="{{ profile.website }}" target="_blank">{{ profile.website }}</a>
+                                {% else %}
+                                    غير محدد
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تسجيل حساب جديد - Rafikni{% endblock %}
+
+{% block content %}
+<style>
+    .register-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .register-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-width: 1000px;
+        width: 90%;
+        display: flex;
+        min-height: 600px;
+    }
+    
+    .register-left {
+        background: linear-gradient(135deg, #1e5799 0%, #207cca 100%);
+        color: white;
+        padding: 3rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .register-left::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("{% static 'images/register-bg.svg' %}") no-repeat center;
+        background-size: cover;
+        opacity: 0.1;
+    }
+    
+    .register-right {
+        padding: 3rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .register-title {
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        position: relative;
+        padding-bottom: 15px;
+    }
+    
+    .register-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: #2a6fdb;
+        border-radius: 2px;
+    }
+    
+    .feature-list {
+        margin-top: 2rem;
+    }
+    
+    .feature-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-icon {
+        background: rgba(255, 255, 255, 0.2);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .form-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        z-index: 10;
+    }
+    
+    .form-control {
+        padding-left: 45px;
+        border-radius: 8px;
+        height: 50px;
+        border: 1px solid #e1e5eb;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: #2a6fdb;
+        box-shadow: 0 0 0 0.2rem rgba(42, 111, 219, 0.25);
+    }
+    
+    .role-options {
+        display: flex;
+        gap: 20px;
+        margin-top: 10px;
+    }
+    
+    .role-option {
+        flex: 1;
+        border: 2px solid #e1e5eb;
+        border-radius: 10px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
+    
+    .role-option.active {
+        border-color: #2a6fdb;
+        background: rgba(42, 111, 219, 0.05);
+    }
+    
+    .role-option i {
+        font-size: 24px;
+        margin-bottom: 10px;
+        display: block;
+        color: #2a6fdb;
+    }
+    
+    .btn-register {
+        background: #2a6fdb;
+        border: none;
+        padding: 12px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s;
+        height: 50px;
+    }
+    
+    .btn-register:hover {
+        background: #1d5bbf;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(42, 111, 219, 0.3);
+    }
+    
+    .login-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #6c757d;
+    }
+    
+    @media (max-width: 768px) {
+        .register-card {
+            flex-direction: column;
+        }
+        
+        .register-left {
+            padding: 2rem;
+        }
+    }
+</style>
+
+<div class="register-container">
+    <div class="register-card">
+        <!-- الجانب الأيسر: معلومات عن الموقع -->
+        <div class="register-left">
+            <div class="text-white position-relative">
+                <h2 class="display-5 fw-bold mb-4">انضم إلى مجتمع Rafikni</h2>
+                <p class="lead mb-4">سجل حسابك الآن وتمتع بخدماتنا المتكاملة للاستشارات المهنية</p>
+                
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <span>تواصل مع أفضل الخبراء والمستشارين</span>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <span>إدارة مواعيدك بكل سهولة</span>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <span>حفظ وتنظيم جميع وثائقك</span>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <span>تقييم الخدمات والاستشارات</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- الجانب الأيمن: نموذج التسجيل -->
+        <div class="register-right">
+            <h2 class="register-title">إنشاء حساب جديد</h2>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- الاسم الكامل -->
+                <div class="form-group">
+                    <i class="fas fa-user form-icon"></i>
+                    {{ form.full_name }}
+                    {% if form.full_name.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.full_name.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- البريد الإلكتروني -->
+                <div class="form-group">
+                    <i class="fas fa-envelope form-icon"></i>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.email.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- رقم الهاتف -->
+                <div class="form-group">
+                    <i class="fas fa-phone form-icon"></i>
+                    {{ form.phone }}
+                </div>
+                
+                <!-- نوع الحساب -->
+                <div class="form-group">
+    <label class="form-label d-block fw-medium mb-3">نوع الحساب</label>
+    <div class="role-options">
+        <div class="role-option" onclick="selectRole('client')">
+            <i class="fas fa-user"></i>
+            <div>عميل</div>
+            <small class="text-muted">ابحث عن خدمات واستشارات</small>
+        </div>
+
+        <div class="role-option" onclick="selectRole('provider')">
+            <i class="fas fa-user-tie"></i>
+            <div>مقدم خدمة</div>
+            <small class="text-muted">قدم خدماتك واستشاراتك</small>
+        </div>
+    </div>
+    
+    <!-- إخفاء الحقل Django -->
+    {{ form.role }}
+    <style>
+        #id_role {
+            display: none;
+        }
+    </style>
+</div>
+                
+                <!-- كلمة المرور -->
+                <div class="form-group">
+                    <i class="fas fa-lock form-icon"></i>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.password1.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- تأكيد كلمة المرور -->
+                <div class="form-group">
+                    <i class="fas fa-lock form-icon"></i>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.password2.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100 btn-register">
+                    <i class="fas fa-user-plus me-2"></i>تسجيل الحساب
+                </button>
+                
+                <div class="login-link">
+                    لديك حساب بالفعل؟ <a href="{% url 'login' %}">سجل الدخول الآن</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // تحديد نوع الحساب
+    function selectRole(role) {
+        document.querySelectorAll('.role-option').forEach(option => {
+            option.classList.remove('active');
+        });
+        
+        const selectedOption = document.querySelector(`.role-option:nth-child(${role === 'client' ? 1 : 2})`);
+        selectedOption.classList.add('active');
+        
+        document.getElementById('id_role').value = role;
+    }
+    
+    // تحديد نوع الحساب الافتراضي
+    window.onload = function() {
+        selectRole('client');
+    };
+</script>
+{% endblock %}

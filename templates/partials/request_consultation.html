@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}طلب استشارة - RaFiKNi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-comments me-2"></i> طلب استشارة جديدة
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">اختر مجال الاستشارة</label>
+                            <div class="row">
+                                {% for category in categories %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card consultation-category-card">
+                                        <div class="card-body text-center">
+                                            <i class="fas {{ category.icon }} fa-2x text-primary mb-3"></i>
+                                            <h6 class="card-title">{{ category.name }}</h6>
+                                            <button type="button" class="btn btn-outline-primary btn-sm select-category" data-id="{{ category.id }}">
+                                                اختر
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div id="consultants-section" class="mb-4 d-none">
+                            <label class="form-label fw-bold">اختر المستشار</label>
+                            <div class="row" id="consultants-container">
+                                <!-- Consultants will be loaded here dynamically -->
+                            </div>
+                        </div>
+                        
+                        <div id="consultation-form" class="d-none">
+                            <div class="mb-3">
+                                <label for="question" class="form-label">صيغ سؤالك أو استفسارك</label>
+                                <textarea class="form-control" id="question" name="question" rows="5" placeholder="أدخل تفاصيل استشارتك هنا..." required></textarea>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="attachment" class="form-label">إرفاق ملف (اختياري)</label>
+                                <input class="form-control" type="file" id="attachment" name="attachment">
+                                <small class="text-muted">يمكنك إرفاق صورة أو مستند PDF (الحجم الأقصى 5MB)</small>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="button" id="back-to-consultants" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i> رجوع
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-1"></i> إرسال الطلب
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .consultation-category-card {
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+    
+    .consultation-category-card:hover {
+        transform: translateY(-5px);
+        border-color: #6a0dad;
+    }
+    
+    .consultant-card {
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+    
+    .consultant-card:hover, .consultant-card.selected {
+        border-color: #6a0dad;
+        background-color: rgba(106, 13, 173, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Category selection
+        const categoryCards = document.querySelectorAll('.select-category');
+        const consultantsSection = document.getElementById('consultants-section');
+        const consultationForm = document.getElementById('consultation-form');
+        
+        categoryCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const categoryId = this.dataset.id;
+                
+                // Simulate loading consultants
+                document.getElementById('consultants-container').innerHTML = `
+                    <div class="col-12 text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">جاري تحميل المستشارين المتاحين...</p>
+                    </div>
+                `;
+                
+                // Show consultants section
+                consultantsSection.classList.remove('d-none');
+                
+                // Simulate API call to get consultants
+                setTimeout(() => {
+                    document.getElementById('consultants-container').innerHTML = `
+                        <div class="col-md-6 mb-3">
+                            <div class="card consultant-card" data-id="1">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{% static 'images/consultant1.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="Consultant">
+                                        <div>
+                                            <h6 class="mb-0">د. محمد أحمد</h6>
+                                            <small class="text-muted">محامي متخصص</small>
+                                            <div class="text-warning mt-1">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star-half-alt"></i>
+                                                <span class="text-muted">(128)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card consultant-card" data-id="2">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{% static 'images/consultant2.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="Consultant">
+                                        <div>
+                                            <h6 class="mb-0">أ. سارة خالد</h6>
+                                            <small class="text-muted">خبيرة موارد بشرية</small>
+                                            <div class="text-warning mt-1">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <span class="text-muted">(98)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add event listeners to consultant cards
+                    const consultantCards = document.querySelectorAll('.consultant-card');
+                    consultantCards.forEach(card => {
+                        card.addEventListener('click', function() {
+                            // Remove selected class from all cards
+                            consultantCards.forEach(c => c.classList.remove('selected'));
+                            // Add selected class to clicked card
+                            this.classList.add('selected');
+                            // Show consultation form
+                            consultationForm.classList.remove('d-none');
+                        });
+                    });
+                }, 1000);
+            });
+        });
+        
+        // Back to consultants button
+        document.getElementById('back-to-consultants').addEventListener('click', function() {
+            consultationForm.classList.add('d-none');
+            const selectedCard = document.querySelector('.consultant-card.selected');
+            if (selectedCard) {
+                selectedCard.classList.remove('selected');
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}طلب استشارة جديدة{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">طلب استشارة جديدة</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- عرض حقل الخدمة -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.service.label }}</label>
+                            {{ form.service }}
+                            {% if form.service.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.service.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- عرض حقل السؤال -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.question.label }}</label>
+                            {{ form.question }}
+                            {% if form.question.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.question.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'consultation_list' %}" class="btn btn-secondary">إلغاء</a>
+                            <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // تهيئة Select2 لحقل الخدمات
+    $('#id_service').select2({
+        placeholder: "ابحث واختر خدمة",
+        allowClear: true,
+        language: {
+            noResults: function() {
+                return "لا توجد نتائج";
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

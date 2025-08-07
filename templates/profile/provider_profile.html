@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}الملف العام - مقدم الخدمة{% endblock %}
+
+{% block content %}
+<style>
+    .consultant-profile {
+        font-family: 'Tajawal', sans-serif;
+    }
+    .profile-card {
+        border-radius: 15px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        border: none;
+    }
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        padding: 1.5rem;
+    }
+    .profile-img {
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+        border: 5px solid white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+    .profile-img:hover {
+        transform: scale(1.05);
+    }
+    .consultant-name {
+        color: #2b2d42;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .consultant-email {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+    }
+    .consultant-bio {
+        color: #495057;
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+    }
+    .specialty-badge {
+        background-color: #f8f9fa;
+        color: #4361ee;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .specialty-badge:hover {
+        background-color: #4361ee;
+        color: white;
+        transform: translateY(-2px);
+    }
+    .services-list {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .service-item {
+        border-left: 4px solid #4361ee;
+        padding: 1rem 1.5rem;
+        margin-bottom: 0.5rem;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        transition: all 0.3s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .service-item:hover {
+        background-color: #e9ecef;
+        transform: translateX(5px);
+    }
+    .service-price {
+        font-weight: 700;
+        color: #4361ee;
+    }
+    .section-title {
+        color: #2b2d42;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        position: relative;
+        padding-bottom: 0.5rem;
+    }
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(to right, #4361ee, #3a0ca3);
+        border-radius: 3px;
+    }
+    @media (max-width: 768px) {
+        .profile-img {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 1.5rem;
+        }
+        .col-md-8 {
+            text-align: center;
+        }
+        .d-flex {
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="container py-5 consultant-profile">
+    <div class="card profile-card">
+        <div class="card-header">
+            <h4 class="text-white mb-0">الملف العام - {{ consultant.user.full_name }}</h4>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4 text-center mb-4 mb-md-0">
+                    <img src="{% if consultant.profile_image %}{{ consultant.profile_image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                         class="profile-img" alt="صورة الملف الشخصي">
+                </div>
+                <div class="col-md-8">
+                    <h2 class="consultant-name">{{ consultant.user.get_full_name }}</h2>
+                    <p class="consultant-email">
+                        <i class="fas fa-envelope me-2"></i>{{ consultant.user.email }}
+                    </p>
+                    
+                    <div class="consultant-bio">
+                        <p>{{ consultant.bio|linebreaks }}</p>
+                    </div>
+                    
+                    <h5 class="section-title">التخصصات</h5>
+                    <div class="d-flex flex-wrap">
+                        {% for category in consultant.categories.all %}
+                        <span class="specialty-badge">
+                            <i class="fas fa-tag me-1"></i>{{ category.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h5 class="section-title">الخدمات المقدمة</h5>
+                    <div class="services-list">
+                        {% for service in services %}
+                        <div class="service-item">
+                            <div>
+                                <h6 class="mb-1">{{ service.title }}</h6>
+                                <p class="mb-0 text-muted small">{{ service.description|truncatewords:15 }}</p>
+                            </div>
+                            <span class="service-price">{{ service.price }} ر.س</span>
+                        </div>
+                        {% empty %}
+                        <div class="alert alert-info">
+                            لا توجد خدمات متاحة حالياً
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

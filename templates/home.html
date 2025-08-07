@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}RaFiKNi - منصة الخدمات الإدارية{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section py-5 text-center">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="display-4 fw-bold mb-4">رفيقك في رحلة النجاح الإداري</h1>
+            <p class="lead mb-5">منصة متكاملة لتسيير أعمالك الإدارية بكل سهولة واحترافية</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-4">ابدأ مجاناً</a>
+                <a href="#features" class="btn btn-outline-light btn-lg px-4">اكتشف المزيد</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features-section py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">لماذا تختار رفيكني؟</h2>
+            <p class="text-muted">حلول إدارية متكاملة توفر وقتك ومالك</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle p-3 mb-3 mx-auto">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">توفير الوقت</h5>
+                        <p class="card-text text-muted">أتمتة المهام الإدارية الروتينية لتترك لك الوقت للتركيز على عملك الأساسي</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle p-3 mb-3 mx-auto">
+                            <i class="fas fa-money-bill-wave fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">توفير التكاليف</h5>
+                        <p class="card-text text-muted">خدمات إدارية بأسعار تنافسية توفر عليك تكاليف التوظيف والمكاتب</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle p-3 mb-3 mx-auto">
+                            <i class="fas fa-shield-alt fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">أمان وحماية</h5>
+                        <p class="card-text text-muted">نظام حماية متكامل يحافظ على بياناتك ووثائقك بأعلى معايير الأمان</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Section -->
+<section class="services-section py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">خدماتنا المتكاملة</h2>
+            <p class="text-muted">كل ما تحتاجه لإدارة مؤسستك في مكان واحد</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-file-invoice-dollar text-primary fa-3x mb-3"></i>
+                        <h5 class="card-title">المحاسبة والضرائب</h5>
+                        <p class="card-text text-muted">تخزين المرتبات، الفواتير، والتصريحات الجبائية وتنبيه بلاجرائات اللازمة للوقاية من الضرر</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-users text-primary fa-3x mb-3"></i>
+                        <h5 class="card-title">الموارد البشرية</h5>
+                        <p class="card-text text-muted">تواصل بذكاء مع المحاسيبين و الإدارين للربح الوقت تسهيل العمل</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-gavel text-primary fa-3x mb-3"></i>
+                        <h5 class="card-title">الاستشارات القانونية</h5>
+                        <p class="card-text text-muted">استشارات قانونية متخصصة لتأسيس وإدارة مؤسستك</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-file-contract text-primary fa-3x mb-3"></i>
+                        <h5 class="card-title">إدارة الوثائق</h5>
+                        <p class="card-text text-muted">تخزين وتنظيم الوثائق مع تنبيهات بالمواعيد المهمة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonials-section py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">آراء عملائنا</h2>
+            <p class="text-muted">انطباعات المستخدمين الذين استفادوا من خدماتنا</p>
+        </div>
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img src="{% static 'images/client1.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="Client">
+                                        <div>
+                                            <h5 class="mb-0">عمر بن عيسى</h5>
+                                            <small class="text-muted">مالك محل تجاري</small>
+                                        </div>
+                                    </div>
+                                    <p class="card-text">"لقد وفرت لي منصة RaFiKNi الكثير من الوقت والجهد في متابعة أموري الإدارية والجبائية. الآن أستطيع التركيز على تطوير عملي بدلاً من الانشغال بالأمور الروتينية."</p>
+                                    <div class="text-warning">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img src="{% static 'images/client2.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="Client">
+                                        <div>
+                                            <h5 class="mb-0">فاطمة الزهراء</h5>
+                                            <small class="text-muted">مديرة مركز تعليمي</small>
+                                        </div>
+                                    </div>
+                                    <p class="card-text">"الاستشارات القانونية التي حصلت عليها من خلال المنصة ساعدتني في تجنب مشاكل إدارية كبرى. فريق الدعم كان محترفاً وسريعاً في الرد على استفساراتي."</p>
+                                    <div class="text-warning">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="mb-4">جاهز لتبسيط إدارة مؤسستك؟</h2>
+        <p class="lead mb-5">انضم إلى أكثر من 1000 مؤسسة تستخدم RaFiKNi يومياً</p>
+        <a href="{% url 'register' %}" class="btn btn-light btn-lg px-5">ابدأ مجاناً</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #6a0dad, #9c27b0);
+        color: white;
+        padding: 5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url("{% static 'images/pattern.png' %}") repeat;
+        opacity: 0.1;
+        z-index: 0;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}

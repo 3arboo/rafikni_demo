@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تعديل الملف الشخصي{% endblock %}
+
+{% block content %}
+<style>
+    .profile-edit-container {
+        font-family: 'Tajawal', sans-serif;
+    }
+    .profile-edit-card {
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        border: none;
+    }
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        padding: 1.25rem 1.5rem;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .form-control {
+        border-radius: 8px;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s;
+    }
+    .form-control:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+    }
+    .btn-cancel {
+        background-color: #f8f9fa;
+        color: #495057;
+        border: 1px solid #e0e0e0;
+        padding: 10px 25px;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    .btn-cancel:hover {
+        background-color: #e9ecef;
+        color: #212529;
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        border: none;
+        padding: 10px 25px;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+    }
+    /* تحسين عرض حقول النموذج */
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-right: -10px;
+        margin-left: -10px;
+    }
+    .form-col {
+        padding-right: 10px;
+        padding-left: 10px;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    @media (min-width: 768px) {
+        .form-col {
+            flex: 0 0 50%;
+            max-width: 50%;
+        }
+    }
+    /* تحسين عرض الصورة */
+    .image-preview {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #f0f0f0;
+        margin-bottom: 15px;
+    }
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+    }
+    .file-input-wrapper input[type="file"] {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    .custom-file-label {
+        display: inline-block;
+        padding: 8px 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .custom-file-label:hover {
+        background-color: #e9ecef;
+    }
+</style>
+
+<div class="container py-5 profile-edit-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card profile-edit-card">
+                <div class="card-header">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-user-edit me-2"></i> تعديل الملف الشخصي
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- صورة الملف الشخصي -->
+                        <div class="form-group text-center">
+                            {% if form.instance.profile_image %}
+                                <img src="{{ form.instance.profile_image.url }}" class="image-preview" id="imagePreview" alt="صورة الملف الشخصي">
+                            {% else %}
+                                <img src="{% static 'images/default-avatar.png' %}" class="image-preview" id="imagePreview" alt="صورة افتراضية">
+                            {% endif %}
+                            <div class="file-input-wrapper">
+                                <button type="button" class="custom-file-label">
+                                    <i class="fas fa-camera me-2"></i> تغيير الصورة
+                                </button>
+                                {{ form.profile_image }}
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <!-- الحقول الأساسية -->
+                            {% for field in form %}
+                                {% if field.name != 'profile_image' %}
+                                <div class="form-col">
+                                    <div class="form-group">
+                                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.help_text %}
+                                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                                        {% endif %}
+                                        {% for error in field.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'profile' %}" class="btn btn-cancel">
+                                <i class="fas fa-times me-2"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-save text-white">
+                                <i class="fas fa-save me-2"></i> حفظ التغييرات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // عرض معاينة الصورة عند اختيارها
+    document.getElementById('id_profile_image').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // التحقق من صحة النموذج
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}

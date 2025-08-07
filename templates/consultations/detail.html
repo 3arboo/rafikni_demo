@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الاستشارة #{{ consultation.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>
+                        تفاصيل الاستشارة #{{ consultation.id }}
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Consultation Info -->
+                    <div class="mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-user me-2"></i>
+                                    العميل:
+                                </h5>
+                                <p>{{ consultation.client.username }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-user-tie me-2"></i>
+                                    المستشار:
+                                </h5>
+                                <p>{{ consultation.consultant.username }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    تاريخ الطلب:
+                                </h5>
+                                <p>{{ consultation.created_at|date:"Y/m/d H:i" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    الحالة:
+                                </h5>
+                                <span class="badge 
+                                    {% if consultation.status == 'pending' %}bg-warning
+                                    {% elif consultation.status == 'accepted' %}bg-success
+                                    {% elif consultation.status == 'rejected' %}bg-danger
+                                    {% else %}bg-info{% endif %}">
+                                    {{ consultation.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question Section -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <h5 class="text-primary">
+                            <i class="fas fa-question-circle me-2"></i>
+                            السؤال:
+                        </h5>
+                        <p>{{ consultation.question }}</p>
+                    </div>
+
+                    <!-- Response Section (if exists) -->
+                    {% if consultation.response %}
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <h5 class="text-primary">
+                            <i class="fas fa-reply me-2"></i>
+                            الرد:
+                        </h5>
+                        <p>{{ consultation.response }}</p>
+                        {% if consultation.updated_at %}
+                        <small class="text-muted">
+                            آخر تحديث: {{ consultation.updated_at|date:"Y/m/d H:i" }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'consultation_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> رجوع
+                        </a>
+                        
+                        {% if request.user == consultation.consultant and consultation.status != 'completed' %}
+                        <a href="{% url 'respond_consultation' consultation.id %}" class="btn btn-primary">
+                            <i class="fas fa-reply me-2"></i> الرد على الاستشارة
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الحجز - RaFiKNi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">تفاصيل الحجز #{{ booking.id }}</h4>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>معلومات الخدمة</h5>
+                    <p><strong>الخدمة:</strong> <a href="{% url 'service_detail' booking.service.slug %}">{{ booking.service.title }}</a></p>
+                    <p><strong>المقدم:</strong> <a href="{% url 'consultant_detail' booking.service.provider.consultant.id %}">{{ booking.service.provider.full_name }}</a></p>
+                    <p><strong>السعر:</strong> {{ booking.service.price }} ر.س</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>معلومات الحجز</h5>
+                    <p><strong>حالة الحجز:</strong> 
+                        <span class="badge bg-{% if booking.status == 'confirmed' %}success
+                            {% elif booking.status == 'pending' %}warning
+                            {% elif booking.status == 'completed' %}info
+                            {% elif booking.status == 'cancelled' %}danger
+                            {% else %}secondary{% endif %}">
+                            {{ booking.get_status_display }}
+                        </span>
+                    </p>
+                    {% if booking.slot %}
+                    <p><strong>التاريخ والوقت:</strong> {{ booking.slot.start_time|date:"d/m/Y - H:i" }} إلى {{ booking.slot.end_time|time:"H:i" }}</p>
+                    {% endif %}
+                    <p><strong>تاريخ الإنشاء:</strong> {{ booking.created_at|date:"d/m/Y - H:i" }}</p>
+                </div>
+            </div>
+            
+            {% if booking.notes %}
+            <div class="mb-4">
+                <h5>ملاحظات إضافية</h5>
+                <div class="card bg-light p-3">
+                    {{ booking.notes }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'my_bookings' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-right me-2"></i> رجوع إلى القائمة
+                </a>
+                {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-outline-danger">
+                    <i class="fas fa-times me-2"></i> إلغاء الحجز
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

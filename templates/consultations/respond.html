@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}الرد على الاستشارة{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4>الرد على الاستشارة #{{ consultation.id }}</h4>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h5>سؤال العميل:</h5>
+                <p class="bg-light p-3 rounded">{{ consultation.question }}</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="response" class="form-label">ردك على الاستشارة:</label>
+                    <textarea class="form-control" id="response" name="response" rows="5" required>{{ consultation.response }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="status" class="form-label">حالة الاستشارة:</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="pending" {% if consultation.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                        <option value="accepted" {% if consultation.status == 'accepted' %}selected{% endif %}>مقبول</option>
+                        <option value="rejected" {% if consultation.status == 'rejected' %}selected{% endif %}>مرفوض</option>
+                        <option value="completed" {% if consultation.status == 'completed' %}selected{% endif %}>مكتمل</option>
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'consultation_detail' consultation.id %}" class="btn btn-outline-secondary me-2">إلغاء</a>
+                    <button type="submit" class="btn btn-primary">حفظ الرد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

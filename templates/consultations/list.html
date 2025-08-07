@@ -1,0 +1,67 @@
+<!-- templates/consultations/list.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>استشاراتي</h2>
+        {% if user.role == 'client' %}
+        <a href="{% url 'consultants_list' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>طلب استشارة جديدة
+        </a>
+        {% endif %}
+    </div>
+
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'all' %}active{% endif %}" 
+               href="?status=all">الكل</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'pending' %}active{% endif %}" 
+               href="?status=pending">قيد الانتظار</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'accepted' %}active{% endif %}" 
+               href="?status=accepted">مقبولة</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'completed' %}active{% endif %}" 
+               href="?status=completed">مكتملة</a>
+        </li>
+    </ul>
+
+    {% if consultations %}
+    <div class="list-group">
+        {% for consultation in consultations %}
+        <div class="list-group-item list-group-item-action">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h5 class="mb-1">
+                        {% if user.role == 'client' %}
+                        إلى: {{ consultation.consultant.get_full_name }}
+                        {% else %}
+                        من: {{ consultation.client.get_full_name }}
+                        {% endif %}
+                    </h5>
+                    <small class="text-muted">{{ consultation.created_at|date:"Y-m-d H:i" }}</small>
+                </div>
+                <span class="badge bg-{% if consultation.status == 'pending' %}warning{% elif consultation.status == 'accepted' %}success{% else %}secondary{% endif %}">
+                    {{ consultation.get_status_display }}
+                </span>
+            </div>
+            <p class="mb-1 mt-2">{{ consultation.question }}</p>
+            <a href="{% url 'consultation_detail' consultation.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                عرض التفاصيل
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center py-5">
+        <i class="fas fa-comments fa-3x mb-3"></i>
+        <h4>لا توجد استشارات لعرضها</h4>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+from django.urls import path
+from . import views
+from django.contrib.auth.views import LogoutView
+
+urlpatterns = [
+    # Authentication URLs
+    path('register/', views.register, name='register'),
+    path('login/', views.user_login, name='login'),
+    path('logout/', views.custom_logout, name='logout'),
+    
+    # Profile URLs
+    path('profile/', views.profile, name='profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    # Add this to your urlpatterns list
+    path('provider-profile/', views.provider_profile, name='provider_profile'),
+    # Dashboard URL
+    path('dashboard/', views.dashboard, name='dashboard'),
+    
+    # Service Management URLs
+    path('services/', views.service_list, name='service_list'),
+    path('services/create/', views.create_service, name='create_service'),
+    path('services/update/<int:pk>/', views.update_service, name='update_service'),
+    
+    # Consultation Slot URLs
+    path('slots/', views.slot_list, name='slot_list'),
+    path('slots/create/', views.create_slot, name='create_slot'),
+    
+    # Service Discovery URLs
+    path('services/browse/', views.browse_services, name='browse_services'),
+    path('services/<slug:slug>/', views.service_detail, name='service_detail'),
+    
+    # Document Management URLs
+    path('documents/', views.document_list, name='document_list'),
+    path('documents/upload/', views.upload_document, name='upload_document'),
+    path('documents/', views.document_list, name='document_list'),
+    path('documents/delete/<int:pk>/', views.delete_document, name='delete_document'),
+    # Consultation System URLs
+    path('consultants/', views.consultants_list, name='consultants_list'),
+    path('consultants/<int:pk>/', views.consultant_detail, name='consultant_detail'),
+    path('consultations/', views.consultation_list, name='consultation_list'),
+    path('consultations/<int:pk>/', views.consultation_detail, name='consultation_detail'),
+    path('consultations/<int:pk>/respond/', views.respond_to_consultation, name='respond_consultation'),
+    
+    # Notification System URL
+    path('notifications/', views.notifications, name='notifications'),
+    
+    # FAQ URL
+    path('faq/', views.faq_list, name='faq_list'),
+    
+    # Home URL
+    path('', views.home, name='home'),
+    path('switch-role/', views.switch_role, name='switch_role'),
+    path('dashboard/client/', views.client_dashboard, name='client_dashboard'),
+    path('dashboard/provider/', views.provider_dashboard, name='provider_dashboard'),
+
+   
+path('consultations/', views.consultation_list, name='consultation_list'),
+path('inquiries/', views.inquiries_list, name='inquiries'),
+path('services/', views.service_list, name='service_list'),
+path('services/create/', views.create_service, name='create_service'),
+path('services/update/<int:pk>/', views.update_service, name='update_service'),
+path('services/<slug:slug>/', views.service_detail, name='service_detail'),
+    # أو إذا كنت تستخدم ID بدلاً من slug:
+path('services/<int:pk>/', views.service_detail, name='service_detail'),
+path('switch-role/', views.switch_role, name='switch_role'),
+
+path('services/<int:service_id>/request/', views.request_consultation, name='request_consultation'),
+
+path('consultant/<int:pk>/', views.consultant_detail, name='consultant_detail'),
+path('book/<int:slot_id>/', views.book_consultation, name='book_consultation'),
+path('my-bookings/', views.my_bookings, name='my_bookings'),
+path('booking/<int:pk>/', views.booking_detail, name='booking_detail'),
+path('booking/<int:pk>/cancel/', views.cancel_booking, name='cancel_booking'),
+
+path('services/autocomplete/', views.autocomplete_services, name='autocomplete_services'),
+]

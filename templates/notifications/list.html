@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الإشعارات{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>
+                    الإشعارات
+                </h4>
+                <span class="badge bg-light text-dark">
+                    {{ notifications.count }} إشعار
+                </span>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            {% if notifications %}
+            <div class="list-group">
+                {% for notification in notifications %}
+                <a href="{% if notification.link %}{{ notification.link }}{% else %}#{% endif %}" 
+                   class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-primary{% endif %}">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1">{{ notification.message }}</p>
+                            <small class="text-muted">
+                                <i class="far fa-clock me-1"></i>
+                                {{ notification.created_at|timesince }} منذ
+                            </small>
+                        </div>
+                        {% if not notification.is_read %}
+                        <span class="badge bg-danger">جديد</span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-3 d-flex justify-content-between">
+                <a href="{% url 'notifications' %}?mark_all=read" class="btn btn-outline-primary">
+                    <i class="fas fa-check-circle me-2"></i>تعليم الكل كمقروء
+                </a>
+                <a href="{% url 'notifications' %}?delete_all=true" class="btn btn-outline-danger">
+                    <i class="fas fa-trash-alt me-2"></i>حذف الكل
+                </a>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+                <h4>لا توجد إشعارات لعرضها</h4>
+                <p class="text-muted">سيظهر هنا أي إشعارات جديدة تتلقاها</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

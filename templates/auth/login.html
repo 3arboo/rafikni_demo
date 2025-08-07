@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تسجيل الدخول{% endblock %}
+
+{% block content %}
+<style>
+    .login-container {
+        font-family: 'Tajawal', sans-serif;
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+    }
+    .login-card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+    .card-header {
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        padding: 1.5rem;
+        text-align: center;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    .form-control {
+        border-radius: 8px;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s;
+    }
+    .form-control:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+    }
+    .btn-login {
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        border: none;
+        padding: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s;
+    }
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    }
+    .form-check-input:checked {
+        background-color: #4361ee;
+        border-color: #4361ee;
+    }
+    .form-check-label {
+        cursor: pointer;
+    }
+    .auth-links a {
+        color: #4361ee;
+        text-decoration: none;
+        transition: all 0.3s;
+        font-weight: 500;
+    }
+    .auth-links a:hover {
+        color: #3a0ca3;
+        text-decoration: underline;
+    }
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+        color: #6c757d;
+    }
+    .divider::before, .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .divider::before {
+        margin-right: 15px;
+    }
+    .divider::after {
+        margin-left: 15px;
+    }
+    .social-login .btn {
+        border-radius: 8px;
+        padding: 10px;
+        font-weight: 500;
+    }
+    .social-login .btn i {
+        margin-right: 8px;
+    }
+    .password-toggle {
+        cursor: pointer;
+        position: absolute;
+        top: 50%;
+        left: 15px;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+</style>
+
+<div class="login-container">
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="login-card card">
+                    <div class="card-header">
+                        <h4 class="mb-0 text-white">
+                            <i class="fas fa-sign-in-alt me-2"></i> تسجيل الدخول
+                        </h4>
+                    </div>
+                    <div class="card-body p-4 p-md-5">
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- البريد الإلكتروني -->
+                            <div class="mb-4">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    <i class="fas fa-envelope me-2"></i> {{ form.email.label }}
+                                </label>
+                                <div class="position-relative">
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.email.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- كلمة المرور -->
+                            <div class="mb-4">
+                                <label for="{{ form.password.id_for_label }}" class="form-label">
+                                    <i class="fas fa-lock me-2"></i> {{ form.password.label }}
+                                </label>
+                                <div class="position-relative">
+                                    {{ form.password }}
+                                    <span class="password-toggle" onclick="togglePassword()">
+                                        <i class="far fa-eye"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- تذكرني ونسيت كلمة المرور -->
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="form-check">
+                                    {{ form.remember_me }}
+                                    <label class="form-check-label" for="{{ form.remember_me.id_for_label }}">
+                                        {{ form.remember_me.label }}
+                                    </label>
+                                </div>
+                                <a href="" class="text-primary small">
+                                    نسيت كلمة المرور؟
+                                </a>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-login text-white w-100 mb-3">
+                                تسجيل الدخول
+                            </button>
+                            
+                            <div class="divider">
+                                <span>أو</span>
+                            </div>
+                            
+                            <!-- تسجيل الدخول عبر وسائل التواصل -->
+                            <div class="social-login mb-4">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <a href="#" class="btn btn-outline-danger w-100">
+                                            <i class="fab fa-google"></i> Google
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="#" class="btn btn-outline-primary w-100">
+                                            <i class="fab fa-facebook-f"></i> Facebook
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center auth-links">
+                                ليس لديك حساب؟ <a href="{% url 'register' %}">إنشاء حساب جديد</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // إظهار/إخفاء كلمة المرور
+    function togglePassword() {
+        const passwordField = document.getElementById('{{ form.password.id_for_label }}');
+        const toggleIcon = document.querySelector('.password-toggle i');
+        
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordField.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+    
+    // إضافة فحص للتحقق من صحة النموذج
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // التحقق من البريد الإلكتروني
+            const email = document.getElementById('{{ form.email.id_for_label }}');
+            if (!email.value) {
+                isValid = false;
+                email.classList.add('is-invalid');
+            } else {
+                email.classList.remove('is-invalid');
+            }
+            
+            // التحقق من كلمة المرور
+            const password = document.getElementById('{{ form.password.id_for_label }}');
+            if (!password.value) {
+                isValid = false;
+                password.classList.add('is-invalid');
+            } else {
+                password.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

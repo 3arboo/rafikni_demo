@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}الإشعارات - RaFiKNi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>الإشعارات</h2>
+        <div>
+            <button class="btn btn-outline-secondary me-2">
+                <i class="fas fa-check-circle me-1"></i> تعليم الكل كمقروء
+            </button>
+            <button class="btn btn-outline-danger">
+                <i class="fas fa-trash-alt me-1"></i> حذف الكل
+            </button>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <ul class="nav nav-tabs card-header-tabs" id="notificationsTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">الكل</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="unread-tab" data-bs-toggle="tab" data-bs-target="#unread" type="button" role="tab">غير المقروءة</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="important-tab" data-bs-toggle="tab" data-bs-target="#important" type="button" role="tab">مهمة</button>
+                </li>
+            </ul>
+            <div class="d-flex">
+                <input type="text" class="form-control me-2" placeholder="ابحث في الإشعارات...">
+                <button class="btn btn-outline-secondary">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="tab-content" id="notificationsTabContent">
+                <!-- All Notifications Tab -->
+                <div class="tab-pane fade show active" id="all" role="tabpanel">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle p-2">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">تم تأكيد موعد استشارتك</h6>
+                                        <small class="text-muted">منذ 5 دقائق</small>
+                                    </div>
+                                    <p class="mb-0">تم تأكيد موعد استشارتك القانونية مع د. محمد أحمد يوم 15 يونيو الساعة 10:00 صباحاً</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-warning text-white rounded-circle p-2">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">موعد نهائي للوثيقة</h6>
+                                        <small class="text-muted">منذ يوم واحد</small>
+                                    </div>
+                                    <p class="mb-0">يتبقى 3 أيام فقط لموعد تقديم التصريح الضريبي لشهر مايو 2023</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-info text-white rounded-circle p-2">
+                                        <i class="fas fa-comment-dots"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">رد على استفسارك</h6>
+                                        <small class="text-muted">منذ 3 أيام</small>
+                                    </div>
+                                    <p class="mb-0">أ. سارة خالد ردت على استفسارك بخصوص نظام التأمينات الاجتماعية</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-success text-white rounded-circle p-2">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">تمت معالجة وثيقتك</h6>
+                                        <small class="text-muted">منذ 5 أيام</small>
+                                    </div>
+                                    <p class="mb-0">تمت مراجعة وتأكيد عقد التوظيف الخاص بموظفيك الجدد</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Unread Notifications Tab -->
+                <div class="tab-pane fade" id="unread" role="tabpanel">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle p-2">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">تم تأكيد موعد استشارتك</h6>
+                                        <small class="text-muted">منذ 5 دقائق</small>
+                                    </div>
+                                    <p class="mb-0">تم تأكيد موعد استشارتك القانونية مع د. محمد أحمد يوم 15 يونيو الساعة 10:00 صباحاً</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Important Notifications Tab -->
+                <div class="tab-pane fade" id="important" role="tabpanel">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-warning text-white rounded-circle p-2">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">موعد نهائي للوثيقة</h6>
+                                        <small class="text-muted">منذ يوم واحد</small>
+                                    </div>
+                                    <p class="mb-0">يتبقى 3 أيام فقط لموعد تقديم التصريح الضريبي لشهر مايو 2023</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

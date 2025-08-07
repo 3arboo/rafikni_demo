@@ -1,0 +1,52 @@
+
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1e5799 0%, #207cca 100%)">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'home' %}">RaFiKNi</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'home' %}">الرئيسية</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'browse_services' %}">الخدمات</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'faq_list' %}">الأسئلة الشائعة</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i> {{ user.full_name }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'profile' %}">الملف الشخصي</a></li>
+                        <li><a class="dropdown-item" href="{% url 'dashboard' %}">لوحة التحكم</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'login' %}">تسجيل الدخول</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'register' %}">إنشاء حساب</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

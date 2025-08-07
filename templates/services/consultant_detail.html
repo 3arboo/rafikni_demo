@@ -1,0 +1,71 @@
+<!-- templates/services/consultant_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    {% if consultant.profile_image %}
+                    <img src="{{ consultant.profile_image.url }}" class="rounded-circle mb-3" width="150" height="150">
+                    {% else %}
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:150px; height:150px; margin: 0 auto;">
+                        <i class="fas fa-user-tie fa-3x text-secondary"></i>
+                    </div>
+                    {% endif %}
+                    <h3>{{ consultant.user.get_full_name }}</h3>
+                    <div class="text-warning mb-3">
+                        {% for i in "12345" %}
+                        {% if forloop.counter <= consultant.rating %}
+                        <i class="fas fa-star"></i>
+                        {% else %}
+                        <i class="far fa-star"></i>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+                        {% for cat in consultant.categories.all %}
+                        <span class="badge bg-primary">{{ cat.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% if consultant.is_available %}
+                    <span class="badge bg-success">متاح حالياً</span>
+                    {% else %}
+                    <span class="badge bg-secondary">غير متاح</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">إرسال استشارة</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">التصنيف</label>
+                            <select name="category" class="form-select" required>
+                                {% for cat in consultant.categories.all %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">سؤالك أو استفسارك</label>
+                            <textarea name="question" class="form-control" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-paper-plane me-2"></i> إرسال الاستشارة
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

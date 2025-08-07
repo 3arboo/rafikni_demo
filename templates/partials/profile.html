@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الملف الشخصي - RaFiKNi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <img src="{% if user.profile.profile_image %}{{ user.profile.profile_image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                         class="rounded-circle mb-3" width="150" height="150" alt="صورة الملف الشخصي">
+                    <h5 class="mb-1">{{ user.username }}</h5>
+                    <p class="text-muted mb-3">
+                        {% if user.role == 'client' %}
+                            عميل
+                        {% else %}
+                            مقدم خدمة
+                        {% endif %}
+                    </p>
+                    
+                    <div class="d-grid">
+                        <a href="{% url 'edit_profile' %}" class="btn btn-primary mb-2">
+                            <i class="fas fa-edit me-1"></i> تعديل الملف
+                        </a>
+                        <a href="{% url 'public_profile' user.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i> عرض الملف العام
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">معلومات التواصل</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-envelope me-2 text-primary"></i>
+                            {{ user.email }}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-phone me-2 text-primary"></i>
+                            +213 123 456 789
+                        </li>
+                        <li>
+                            <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                            الجزائر العاصمة
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">معلومات عامة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>الاسم الكامل</h6>
+                            <p>{{ user.first_name }} {{ user.last_name }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>تاريخ الانضمام</h6>
+                            <p>{{ user.date_joined|date:"d M Y" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>الدور الحالي</h6>
+                            <p>
+                                {% if user.role == 'client' %}
+                                    <span class="badge bg-primary">عميل</span>
+                                {% else %}
+                                    <span class="badge bg-success">مقدم خدمة</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>حالة الحساب</h6>
+                            <p><span class="badge bg-success">نشط</span></p>
+                        </div>
+                    </div>
+                    
+                    <h6>نبذة عني</h6>
+                    <p>{{ user.profile.bio|default:"لم يتم إضافة نبذة شخصية بعد." }}</p>
+                </div>
+            </div>
+            
+            {% if user.role == 'provider' %}
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">خدماتي</h5>
+                    <a href="{% url 'add_service' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i> إضافة خدمة
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for service in services %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="card-title mb-0">{{ service.title }}</h5>
+                                        <span class="badge bg-primary">{{ service.price }} دج</span>
+                                    </div>
+                                    <p class="card-text">{{ service.description|truncatechars:100 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-warning">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star-half-alt"></i>
+                                            <span class="text-muted ms-1">(24)</span>
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'edit_service' service.id %}" class="btn btn-sm btn-outline-primary me-1">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'delete_service' service.id %}" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center py-4">
+                            <i class="fas fa-concierge-bell fa-3x text-muted mb-3"></i>
+                            <h5 class="mb-3">لم تقم بإضافة أي خدمات بعد</h5>
+                            <a href="{% url 'add_service' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> إضافة خدمة جديدة
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

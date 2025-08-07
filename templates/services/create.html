@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إضافة خدمة جديدة - RaFiKNi{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-plus-circle me-2"></i> إضافة خدمة جديدة
+                        </h4>
+                        <a href="{% url 'service_list' %}" class="btn btn-sm btn-light">
+                            <i class="fas fa-list me-1"></i> قائمة الخدمات
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- عنوان الخدمة -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-bold">عنوان الخدمة</label>
+                            <input type="text" class="form-control form-control-lg" id="title" name="title" required
+                                   placeholder="أدخل عنواناً واضحاً للخدمة">
+                            <div class="invalid-feedback">
+                                يرجى إدخال عنوان للخدمة
+                            </div>
+                        </div>
+                        
+                        <!-- التصنيف -->
+                        <div class="mb-4">
+                            <label for="category" class="form-label fw-bold">التصنيف</label>
+                            <select class="form-select form-select-lg" id="category" name="category" required>
+                                <option value="" selected disabled>اختر تصنيفاً...</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">
+                                يرجى اختيار تصنيف للخدمة
+                            </div>
+                        </div>
+                        
+                        <!-- وصف الخدمة -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-bold">وصف الخدمة</label>
+                            <textarea class="form-control" id="description" name="description" rows="5" 
+                                      required placeholder="صف خدمتك بالتفصيل..."></textarea>
+                            <div class="invalid-feedback">
+                                يرجى إدخال وصف للخدمة
+                            </div>
+                            <div class="form-text">
+                                اكتب وصفاً واضحاً وشاملاً لخدمتك (200-500 حرف)
+                            </div>
+                        </div>
+                        
+                        <!-- السعر والمدة -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="price" class="form-label fw-bold">السعر (دج)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control form-control-lg" id="price" 
+                                           name="price" min="500" step="500" required
+                                           placeholder="مثال: 5000">
+                                    <span class="input-group-text">دينار جزائري</span>
+                                </div>
+                                <div class="invalid-feedback">
+                                يرجى إدخال سعر صحيح (الحد الأدنى 500 دج)
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="duration" class="form-label fw-bold">مدة التنفيذ</label>
+                                <select class="form-select form-select-lg" id="duration" name="duration" required>
+                                    <option value="" disabled selected>اختر المدة...</option>
+                                    <option value="1">1 يوم</option>
+                                    <option value="3">3 أيام</option>
+                                    <option value="7">1 أسبوع</option>
+                                    <option value="14">أسبوعان</option>
+                                    <option value="30">1 شهر</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- صورة الخدمة -->
+                        <div class="mb-4">
+                            <label for="image" class="form-label fw-bold">صورة الخدمة</label>
+                            <input class="form-control" type="file" id="image" name="image" accept="image/*">
+                            <div class="form-text">
+                                الصور الموصى بها: 800x600 بكثافة، حجم أقل من 2MB
+                            </div>
+                            <div class="mt-2" id="imagePreview"></div>
+                        </div>
+                        
+                        <!-- أزرار الإرسال -->
+                        <div class="d-flex justify-content-between mt-5">
+                            <a href="{% url 'service_list' %}" class="btn btn-outline-secondary btn-lg px-4">
+                                <i class="fas fa-arrow-left me-1"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-save me-1"></i> حفظ الخدمة
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// عرض معاينة الصورة قبل الرفع
+document.getElementById('image').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    
+    if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.classList.add('img-thumbnail');
+            img.style.maxHeight = '150px';
+            preview.appendChild(img);
+        }
+        
+        reader.readAsDataURL(file);
+    }
+});
+
+// التحقق من صحة النموذج
+(function () {
+  'use strict'
+  
+  const forms = document.querySelectorAll('.needs-validation')
+  
+  Array.from(forms).forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
+{% endblock %}

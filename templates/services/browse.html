@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تصفح الخدمات - RaFiKNi{% endblock %}
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        تصفية النتائج
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'browse_services' %}">
+                        <!-- Search Box -->
+                        <div class="mb-3">
+                        <label for="search" class="form-label">بحث</label>
+                        <input type="text" class="form-control" id="autocomplete" name="q" 
+                        value="{{ search_query }}" placeholder="ابحث عن خدمات...">
+                        </div>
+                        
+                        <!-- Category Filter -->
+                        <div class="mb-3">
+                            <label class="form-label">التصنيفات</label>
+                            <div class="list-group">
+                                <a href="{% url 'browse_services' %}?q={{ search_query }}" 
+                                   class="list-group-item list-group-item-action {% if not selected_category %}active{% endif %}">
+                                    الكل
+                                </a>
+                                {% for category in categories %}
+                                <a href="{% url 'browse_services' %}?q={{ search_query }}&category={{ category.id }}" 
+                                   class="list-group-item list-group-item-action {% if selected_category and selected_category.id == category.id %}active{% endif %}">
+                                    {{ category.name }} ({{ category.service_count }})
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i> تطبيق الفلتر
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Services List -->
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    {% if search_query %}
+                    نتائج البحث عن "{{ search_query }}"
+                    {% elif selected_category %}
+                    تصنيف: {{ selected_category.name }}
+                    {% else %}
+                    جميع الخدمات
+                    {% endif %}
+                </h2>
+                <span class="badge bg-primary">
+                    {{ services.paginator.count }} خدمة
+                </span>
+            </div>
+            
+            {% if services %}
+            <div class="row">
+                {% for service in services %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        {% if service.image %}
+                        <img src="{{ service.image.url }}" class="card-img-top" alt="{{ service.title }}" style="height: 180px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 180px;">
+                            <i class="fas fa-image fa-3x"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="card-body">
+                            <h5 class="card-title">{{ service.title }}</h5>
+                            <p class="card-text text-muted">
+                                <i class="fas fa-user-tie me-2"></i>
+                                {{ service.provider.get_full_name|default:service.provider.username }}
+                            </p>
+                            <p class="card-text">
+                                {{ service.description|truncatechars:100 }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-primary fw-bold">
+                                    {{ service.price }} ر.س
+                                </span>
+                                <span class="badge bg-info">
+                                    {{ service.category.name }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent">
+                            <a href="{% url 'service_detail' service.slug %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-eye me-2"></i> عرض التفاصيل
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if services.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&q={{ search_query }}{% if selected_category %}&category={{ selected_category.id }}{% endif %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ services.previous_page_number }}&q={{ search_query }}{% if selected_category %}&category={{ selected_category.id }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in services.paginator.page_range %}
+                    {% if services.number == num %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                    {% elif num > services.number|add:'-3' and num < services.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}&q={{ search_query }}{% if selected_category %}&category={{ selected_category.id }}{% endif %}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if services.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ services.next_page_number }}&q={{ search_query }}{% if selected_category %}&category={{ selected_category.id }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ services.paginator.num_pages }}&q={{ search_query }}{% if selected_category %}&category={{ selected_category.id }}{% endif %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% else %}
+            <div class="alert alert-info text-center py-5">
+                <i class="fas fa-exclamation-circle fa-3x mb-3"></i>
+                <h4>لا توجد خدمات متاحة حالياً</h4>
+                <p class="mb-0">
+                    {% if search_query %}
+                    لم يتم العثور على خدمات تطابق "{{ search_query }}"
+                    {% else %}
+                    لا توجد خدمات في هذا التصنيف
+                    {% endif %}
+                </p>
+                <a href="{% url 'browse_services' %}" class="btn btn-primary mt-3">
+                    عرض جميع الخدمات
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .list-group-item.active {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+</style>
+
+<script>
+$(function() {
+    $("#autocomplete").autocomplete({
+        source: function(request, response) {
+            $.ajax({
+                url: "{% url 'autocomplete_services' %}",
+                dataType: "json",
+                data: {
+                    term: request.term
+                },
+                success: function(data) {
+                    response($.map(data, function(item) {
+                        return {
+                            label: item.label + " (" + item.category + ")",
+                            value: item.label,
+                            url: item.url
+                        };
+                    }));
+                }
+            });
+        },
+        minLength: 2,  // عدد الأحرف الأدنى لبدء البحث
+        select: function(event, ui) {
+            window.location.href = ui.item.url;  // الانتقال إلى صفحة الخدمة عند الاختيار
+        }
+    }).autocomplete("instance")._renderItem = function(ul, item) {
+        // تخصيص عرض كل عنصر في القائمة
+        return $("<li>")
+            .append("<div>" + item.label + "</div>")
+            .appendTo(ul);
+    };
+});
+</script>
+{% endblock %}

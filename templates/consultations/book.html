@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">حجز موعد استشارة</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>تفاصيل الموعد</h5>
+                        <p><strong>المستشار:</strong> {{ slot.provider.full_name }}</p>
+                        <p><strong>الوقت:</strong> {{ slot.start_time|date:"Y-m-d H:i" }} إلى {{ slot.end_time|date:"H:i" }}</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'consultants_list' %}" class="btn btn-secondary">رجوع</a>
+                            <button type="submit" class="btn btn-primary">تأكيد الحجز</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
