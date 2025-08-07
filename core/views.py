@@ -19,22 +19,29 @@ from django.utils.text import slugify
 import uuid
 from django.contrib.auth import login , logout
 # ---- المصادقة والملف الشخصي ---- #
+from django.contrib.auth import login, authenticate
+
 def register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # إنشاء الملف الشخصي تلقائياً
-            Profile.objects.create(user=user)
             
-            # تسجيل الدخول تلقائياً بعد التسجيل
-            login(request, user)
+            # مصادقة المستخدم باستخدام البريد الإلكتروني وكلمة المرور
+            authenticated_user = authenticate(
+                request,
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password1']
+            )
             
-            messages.success(request, 'تم تسجيل الحساب بنجاح!')
-            return redirect('dashboard')  # توجيه مباشر إلى لوحة التحكم
-            
+            if authenticated_user is not None:
+                login(request, authenticated_user)
+                messages.success(request, 'تم تسجيل الحساب بنجاح!')
+                return redirect('dashboard')
+            else:
+                messages.error(request, 'حدث خطأ في المصادقة التلقائية. يرجى تسجيل الدخول يدويًا.')
+                return redirect('login')
         else:
-            # عرض أخطاء النموذج إن وجدت
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
