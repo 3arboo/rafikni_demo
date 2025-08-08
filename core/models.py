@@ -244,15 +244,9 @@ class ConsultationRequest(models.Model):
         ('rejected', 'مرفوض'),
         ('completed', 'مكتمل')
     ]
-    service = models.ForeignKey(
-        Service,
-        on_delete=models.CASCADE,
-        related_name='consultation_requests',
-        verbose_name='الخدمة'
-    )
+    
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_requests')
     consultant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='consultant_requests')
-    category = models.ForeignKey(ServiceCategory, on_delete=models.CASCADE)
     question = models.TextField()
     response = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')

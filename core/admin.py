@@ -78,10 +78,7 @@ class FAQAdmin(admin.ModelAdmin):
     list_filter = ('is_featured',)
     search_fields = ('question', 'answer')
 
-class ConsultationRequestAdmin(admin.ModelAdmin):
-    list_display = ('client', 'consultant', 'category', 'status', 'created_at')
-    list_filter = ('status', 'category')
-    raw_id_fields = ('client', 'consultant', 'category')
+
 
 # تسجيل النماذج مرة واحدة فقط
 admin.site.register(User, CustomUserAdmin)
@@ -96,4 +93,4 @@ admin.site.register(Notification, NotificationAdmin)
 admin.site.register(Review, ReviewAdmin)
 admin.site.register(Advertisement, AdvertisementAdmin)
 admin.site.register(FAQ, FAQAdmin)
-admin.site.register(ConsultationRequest, ConsultationRequestAdmin)
+admin.site.register(ConsultationRequest)

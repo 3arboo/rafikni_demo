@@ -82,14 +82,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rafikni.wsgi.application'
 
-DATABASE_URL = "postgresql://rf_rxr1_user:FDQ9Py9jrfq0Wds1XXkWygxSOxalOYlM@dpg-d2b4mv0gjchc73eu58mg-a/rf_rxr1"
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -159,4 +152,3 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 #handler404 = 'core.views.handler404'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-CSRF_TRUSTED_ORIGINS = ['https://rafikni.onrender.com']

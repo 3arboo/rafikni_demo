@@ -478,10 +478,6 @@ def request_consultation(request):
         if form.is_valid():
             consultation = form.save(commit=False)
             consultation.client = request.user
-            
-            # تعيين المستشار بناءً على مقدم الخدمة المختارة
-            consultation.consultant = consultation.service.provider
-            
             consultation.save()
             
             # إرسال إشعار للمستشار
