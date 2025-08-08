@@ -25,14 +25,17 @@ def register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            
-            # مصادقة المستخدم باستخدام البريد الإلكتروني وكلمة المرور
+            user = form.save(commit=False)
+            user.username = user.email  # حتى لو ما تستخدم username
+            user.save()
+
+            Profile.objects.get_or_create(user=user)  # إنشاء البروفايل
+
             authenticated_user = authenticate(
                 request,
-                email=form.cleaned_data['email'],
+                username=user.email,
                 password=form.cleaned_data['password1']
-            )
+                )
             
             if authenticated_user is not None:
                 login(request, authenticated_user)
