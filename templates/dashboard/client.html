@@ -241,7 +241,7 @@
                     {% if important_documents %}
                     <div class="list-group">
                         {% for doc in important_documents %}
-                        <a href="{% url 'document_detail' doc.id %}" class="list-group-item list-group-item-action">
+                        <a href="{% url 'document_list' %}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ doc.title }}</h6>
                                 {% if doc.reminder_date %}
