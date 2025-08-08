@@ -100,15 +100,16 @@ def switch_role(request):
     
 @login_required
 def edit_profile(request):
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    form = ProfileForm(instance=profile)
+
     if request.method == 'POST':
-        form = ProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
-            messages.success(request, 'تم تحديث الملف الشخصي بنجاح.')
-            return redirect('profile')
-    else:
-        form = ProfileForm(instance=request.user.profile)
-    return render(request, 'profile/edit.html', {'form': form})
+            return redirect('profile_view')
+
+    return render(request, 'profile_edit.html', {'form': form})
 
 # ---- لوحة التحكم ---- #
 @login_required
