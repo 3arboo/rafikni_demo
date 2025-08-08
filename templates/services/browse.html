@@ -86,7 +86,7 @@
                             <h5 class="card-title">{{ service.title }}</h5>
                             <p class="card-text text-muted">
                                 <i class="fas fa-user-tie me-2"></i>
-                                {{ service.provider.get_full_name|default:service.provider.username }}
+                                {{ service.provider.full_name|default:service.provider.full_name }}
                             </p>
                             <p class="card-text">
                                 {{ service.description|truncatechars:100 }}
