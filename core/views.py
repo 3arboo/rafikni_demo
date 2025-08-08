@@ -107,9 +107,9 @@ def edit_profile(request):
         form = ProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
-            return redirect('profile_view')
+            return redirect('profile')
 
-    return render(request, 'profile_edit.html', {'form': form})
+    return render(request, 'profile/edit.html', {'form': form})
 
 # ---- لوحة التحكم ---- #
 @login_required
