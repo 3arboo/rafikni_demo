@@ -122,7 +122,11 @@
         border-color: #2a6fdb;
         box-shadow: 0 0 0 0.2rem rgba(42, 111, 219, 0.25);
     }
-    
+
+    .form-group:focus-within .form-icon {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    }
     .role-options {
         display: flex;
         gap: 20px;
