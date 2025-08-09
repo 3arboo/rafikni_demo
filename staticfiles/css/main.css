@@ -1,0 +1,92 @@
+/* static/css/main.css */
+:root {
+  --primary: #6a0dad;
+  --primary-light: #9c27b0;
+  --secondary: #0ea5e9;
+  --dark: #0f172a;
+  --light: #f1f5f9;
+  --gray: #64748b;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+body {
+  font-family: 'Tajawal', sans-serif;
+  direction: rtl;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+
+.custom-navbar {
+    background: linear-gradient(135deg, #1e5799 0%, #207cca 100%) !important;
+}
+
+.btn-outline-primary {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.card {
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.rating-stars {
+  color: var(--warning);
+}
+
+/* تصميم متجاوب */
+@media (max-width: 768px) {
+  .navbar-nav {
+    padding-top: 1rem;
+  }
+  
+  .hero-section {
+    padding: 3rem 0;
+  }
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.quick-action-btn {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stat-card {
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    background-color: #f8f9fa;
+}
