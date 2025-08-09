@@ -476,27 +476,25 @@ def delete_document(request, pk):
 
 # ---- نظام الاستشارات ---- #
 @login_required
-def request_consultation(request):
+def request_consultation(request, service_id):
+    service = get_object_or_404(Service, id=service_id)
+
     if request.method == 'POST':
         form = ConsultationRequestForm(request.POST)
         if form.is_valid():
             consultation = form.save(commit=False)
             consultation.client = request.user
+            consultation.service = service  # ربط الخدمة تلقائيًا
             consultation.save()
-            
-            # إرسال إشعار للمستشار
-            Notification.objects.create(
-                user=consultation.consultant,
-                message=f"لديك طلب استشارة جديد من {request.user.username}",
-                link=f"/consultations/{consultation.id}/"
-            )
-            
-            messages.success(request, 'تم إرسال طلب الاستشارة بنجاح!')
             return redirect('consultation_list')
     else:
         form = ConsultationRequestForm()
-    
-    return render(request, 'consultations/request.html', {'form': form})
+
+    return render(request, 'consultations/request.html', {
+        'form': form,
+        'service': service
+    })
+
 
 @login_required
 def consultant_detail(request, pk):
