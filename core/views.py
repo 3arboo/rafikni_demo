@@ -644,7 +644,7 @@ def consultant_detail(request, pk):
         ConsultationRequest.objects.create(
             client=request.user,
             consultant=consultant.user,
-            category=category,
+            #category=category,
             question=question
         )
         
