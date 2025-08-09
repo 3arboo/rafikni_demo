@@ -42,11 +42,16 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'core',
     'services',
-    'users'
+    'users',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+CLOUDINARY_URL="cloudinary://<your_api_key>:<your_api_secret>@dveruhd7x"
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
