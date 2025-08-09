@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+from cloudinary_storage.storage import MediaCloudinaryStorage
 from pathlib import Path
 import os
 import dj_database_url
@@ -51,7 +51,18 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 CLOUDINARY_URL = os.getenv("CLOUDINARY_URL")
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+#CLOUDINARY_URL="cloudinary://588663173999688:kDBEisifOzLTHsGyRtnJlq6hpHQ@dveruhd7x"
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dveruhd7x',
+    'API_KEY': '588663173999688',
+    'API_SECRET': 'kDBEisifOzLTHsGyRtnJlq6hpHQ',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
