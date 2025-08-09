@@ -32,15 +32,7 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">الخدمة</label>
-                            <select name="service" class="form-select select2" id="service-select" required>
-                                <option value="" disabled selected>اختر خدمة</option>
-                                {% for service in services %}
-                                <option value="{{ service.id }}">{{ service.title }} ({{ service.category.name }}) - {{ service.price }} دج</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                       
                         <div class="mb-3">
                             <label class="form-label">سؤالك</label>
                             <textarea name="question" class="form-control" rows="5" placeholder="اشرح سؤالك أو استفسارك بالتفصيل..." required></textarea>
