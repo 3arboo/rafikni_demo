@@ -62,9 +62,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.Custom404Middleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 
 ]
-
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 ROOT_URLCONF = 'rafikni.urls'
 
 TEMPLATES = [
