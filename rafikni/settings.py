@@ -167,3 +167,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 #handler404 = 'core.views.handler404'
 CSRF_TRUSTED_ORIGINS = ['https://rafikni.onrender.com']
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
