@@ -32,11 +32,24 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
-                       
+                        
+                        {# عرض الأخطاء العامة للفورم #}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
                         <div class="mb-3">
-                            <label class="form-label">سؤالك</label>
-                            <textarea name="question" class="form-control" rows="5" placeholder="اشرح سؤالك أو استفسارك بالتفصيل..." required></textarea>
+                            <label for="id_question" class="form-label">سؤالك</label>
+                            {{ form.question }}
+                            {% if form.question.errors %}
+                                <div class="text-danger small">
+                                    {{ form.question.errors }}
+                                </div>
+                            {% endif %}
                         </div>
+
                         <div class="d-flex justify-content-between">
                             <a href="{% url 'consultation_list' %}" class="btn btn-secondary">إلغاء</a>
                             <button type="submit" class="btn btn-primary">إرسال الطلب</button>
@@ -52,23 +65,4 @@
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-$(document).ready(function() {
-    // تهيئة Select2 مع البحث
-    $('#service-select').select2({
-        placeholder: "ابحث واختر خدمة",
-        allowClear: true,
-        language: {
-            noResults: function() {
-                return "لا توجد نتائج";
-            }
-        }
-    });
-    
-    // إذا كان هناك خدمة محددة مسبقاً (في حالة التعديل)
-    {% if selected_service %}
-        $('#service-select').val({{ selected_service }}).trigger('change');
-    {% endif %}
-});
-</script>
 {% endblock %}
