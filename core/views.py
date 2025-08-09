@@ -314,6 +314,9 @@ def create_service(request):
             service = form.save(commit=False)
             service.provider = request.user
             
+            # تعيين is_active دائمًا True
+            service.is_active = True
+            
             # إنشاء slug فريد إذا لم يتم توفيره
             if not service.slug:
                 base_slug = slugify(service.title)
@@ -326,6 +329,7 @@ def create_service(request):
         form = ServiceForm()
     
     return render(request, 'services/create.html', {'form': form})
+
 
 @login_required
 def update_service(request, pk):
