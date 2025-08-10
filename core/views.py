@@ -75,10 +75,10 @@ def user_login(request):
             # التوجيه حسب الدور
             if user.role == User.Role.PROVIDER:
                 messages.success(request, f'مرحباً بعودتك، {user.full_name}!')
-                return redirect('dashboard')
+                return redirect('provider_dashboard')
             else:
                 messages.success(request, f'مرحباً بعودتك، {user.full_name}!')
-                return redirect('dashboard')
+                return redirect('client_dashboard')
         else:
             # عرض أخطاء محددة
             for field, errors in form.errors.items():
@@ -118,7 +118,7 @@ def edit_profile(request):
 
 # ---- لوحة التحكم ---- #
 @login_required
-def dashboard(request):
+def provider_dashboard(request):
     try:
         active_ads = Advertisement.get_active_ads()  # Assuming you have a manager method
         
@@ -239,7 +239,87 @@ def dashboard(request):
         return render(request, 'dashboard/error.html', {
             'error': 'حدث خطأ في تحميل البيانات. يرجى المحاولة لاحقًا.'
         }, status=500)
-    
+
+@login_required
+def client_dashboard(request):
+    try:
+        # استعلامات البيانات الأساسية
+        consultations = Consultation.objects.filter(
+            client=request.user
+        ).select_related('slot')
+        
+        bookings = Booking.objects.filter(
+            client=request.user
+        ).select_related('slot', 'service')
+        
+        documents = Document.objects.filter(user=request.user)
+        
+        # الإحصائيات
+        context = {
+            'active_consultations': consultations.filter(
+                status__in=['pending', 'confirmed']
+            ).count(),
+            'active_bookings': bookings.filter(
+                status__in=['pending', 'confirmed'],
+                slot__start_time__gte=timezone.now()
+            ).count(),
+            'documents_count': documents.count(),
+            'unread_notifications': Notification.objects.filter(
+                user=request.user,
+                is_read=False
+            ).count(),
+            'upcoming_consultations': consultations.filter(
+                slot__start_time__gte=timezone.now(),
+                status='confirmed'
+            ).order_by('slot__start_time')[:3],
+            'upcoming_bookings': bookings.filter(
+                slot__start_time__gte=timezone.now(),
+                status='confirmed'
+            ).order_by('slot__start_time')[:3],
+            'important_documents': get_important_documents(documents),
+            'active_ads': get_active_ads()
+        }
+        return render(request, 'dashboard/client.html', context)
+        
+    except Exception as e:
+      
+        return render(request, 'dashboard/error.html', {
+            'error': 'حدث خطأ في تحميل البيانات. يرجى المحاولة لاحقًا.'
+        }, status=500)
+
+@login_required
+def dashboard(request):
+    if request.user.role == User.Role.PROVIDER:
+        return provider_dashboard(request)
+    else:
+      
+        return client_dashboard(request)
+def get_important_documents(documents):
+    """معالجة آمنة للوثائق المهمة"""
+    important_docs = []
+    for doc in documents.filter(
+        is_important=True,
+        reminder_date__isnull=False
+    ).order_by('reminder_date')[:3]:
+        try:
+            doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
+            doc.is_urgent = doc.reminder_days <= 3
+            important_docs.append(doc)
+        except Exception:
+            continue
+    return important_docs
+
+def get_active_ads(limit=3):
+    """الحصول على الإعلانات النشطة"""
+    from .models import Advertisement
+    return Advertisement.objects.filter(
+        is_active=True,
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date()
+    ).order_by('?')[:limit]
+
+
+
 @login_required
 def provider_profile(request):
     if request.user.role != User.Role.PROVIDER:

@@ -14,6 +14,9 @@ urlpatterns = [
     
     # Dashboard URL
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('provider-dashboard/', views.provider_dashboard, name='provider_dashboard'),
+    path('client-dashboard/', views.client_dashboard, name='client_dashboard'),
+    path('switch-role/', views.switch_role, name='switch_role'),
     
     # Service Management URLs
     path('services/', views.service_list, name='service_list'),
