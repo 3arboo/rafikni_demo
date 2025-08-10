@@ -139,7 +139,7 @@ class ConsultationSlotForm(forms.ModelForm):
     
     class Meta:
         model = ConsultationSlot
-        fields = ('start_time', 'end_time', 'is_recurring')  # إضافة الحقل هنا
+        fields = ('start_time', 'end_time', 'is_recurring')
         labels = {
             'start_time': 'وقت البدء',
             'end_time': 'وقت الانتهاء',
@@ -150,11 +150,10 @@ class ConsultationSlotForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
-        # استخراج user من kwargs
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # تعيين الحد الأدنى للوقت
+        # تعيين الحد الأدنى للوقت الحالي
         now = timezone.now()
         min_time = now.strftime('%Y-%m-%dT%H:%M')
         self.fields['start_time'].widget.attrs['min'] = min_time
@@ -176,12 +175,11 @@ class ConsultationSlotForm(forms.ModelForm):
             
             # التحقق من تعارض المواعيد فقط إذا كان المستخدم متاحاً
             if self.user:
-                # استثناء المواعيد التي تم حذفها
+                # تم إزالة شرط is_deleted
                 overlapping_slots = ConsultationSlot.objects.filter(
                     provider=self.user,
                     start_time__lt=end_time,
-                    end_time__gt=start_time,
-                    is_deleted=False
+                    end_time__gt=start_time
                 )
                 
                 # إذا كان هناك مواعيد متعارضة
@@ -189,7 +187,7 @@ class ConsultationSlotForm(forms.ModelForm):
                     raise forms.ValidationError('هذا الموعد يتعارض مع مواعيد أخرى لديك')
         
         return cleaned_data
-
+    
 class DocumentForm(forms.ModelForm):
     class Meta:
         model = Document

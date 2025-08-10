@@ -379,17 +379,21 @@ def slot_list(request):
 @login_required
 def create_slot(request):
     if request.method == 'POST':
-        # يجب تمرير المستخدم هنا
-        form = ConsultationSlotForm(request.POST, user=request.user)  # التعديل هنا
+        form = ConsultationSlotForm(request.POST, user=request.user)
         if form.is_valid():
             slot = form.save(commit=False)
-            slot.provider = request.user  
+            slot.provider = request.user
             slot.save()
+            
+            # هنا يمكنك معالجة المواعيد المتكررة إذا كان is_recurring True
+            if form.cleaned_data.get('is_recurring'):
+                # قم بتنفيذ منطق إنشاء مواعيد متكررة هنا
+                pass
+            
             messages.success(request, 'تم إضافة الموعد بنجاح!')
             return redirect('slot_list')
     else:
-        # يجب تمرير المستخدم هنا أيضاً
-        form = ConsultationSlotForm(user=request.user)  # التعديل هنا
+        form = ConsultationSlotForm(user=request.user)
     
     return render(request, 'consultations/create_slot.html', {'form': form})
 
