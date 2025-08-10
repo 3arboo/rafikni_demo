@@ -122,119 +122,30 @@ def edit_profile(request):
 # ---- لوحة التحكم ---- #
 @login_required
 def provider_dashboard(request):
-    # For client dashboard (since this template is client_dashboard.html)
-    if request.user.role == User.Role.CLIENT:
-        # Client-specific queries
-        consultations = Consultation.objects.filter(client=request.user).select_related('slot')
-        bookings = Booking.objects.filter(client=request.user).select_related('slot', 'service')
-        documents = Document.objects.filter(user=request.user)
+    if request.user.role == User.Role.PROVIDER:
+        # استعلامات لمقدم الخدمة
+        services = Service.objects.filter(provider=request.user)
+        bookings = Booking.objects.filter(service__provider=request.user)
+        consultations = Consultation.objects.filter(slot__provider=request.user)
         
-        # Active counts
-        active_consultations = consultations.filter(
-            status__in=['pending', 'confirmed']
-        ).count()
-        
-        active_bookings = bookings.filter(
-            status__in=['pending', 'confirmed'],
-            slot__start_time__gte=timezone.now()
-        ).count()
-        
-        # Upcoming appointments
-        upcoming_consultations = consultations.filter(
-            slot__start_time__gte=timezone.now(),
-            status='confirmed'
-        ).order_by('slot__start_time')[:3]
-        
-        upcoming_bookings = bookings.filter(
-            slot__start_time__gte=timezone.now(),
-            status='confirmed'
-        ).order_by('slot__start_time')[:3]
-        
-        # Important documents
-        important_documents = documents.filter(
-            is_important=True,
-            reminder_date__isnull=False
-        ).order_by('reminder_date')[:3]
-        
-        # Add calculated fields
-        for doc in important_documents:
-            doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
-            doc.is_urgent = doc.reminder_days <= 3
-        
+        # الإحصائيات
         context = {
-            'active_consultations': active_consultations,
-            'active_bookings': active_bookings,
-            'documents_count': documents.count(),
-            'unread_notifications': Notification.objects.filter(
-                user=request.user,
-                is_read=False
-            ).count(),
-            'upcoming_consultations': upcoming_consultations,
-            'upcoming_bookings': upcoming_bookings,
-            'important_documents': important_documents,
-            'recent_notifications': Notification.objects.filter(
-                user=request.user
-            ).order_by('-created_at')[:5]
+            'active_services': services.filter(is_active=True).count(),
+            'pending_consultations': consultations.filter(status='pending').count(),
+            'completed_bookings': bookings.filter(status='completed').count(),
+            'upcoming_appointments': consultations.filter(
+                slot__start_time__gte=timezone.now(),
+                status='confirmed'
+            ).order_by('slot__start_time')[:5],
+            'recent_reviews': Review.objects.filter(
+                service__provider=request.user
+            ).order_by('-created_at')[:3],
+            'total_earnings': sum(booking.service.price for booking in bookings.filter(status='completed')),
+            'active_ads': Advertisement.get_active_ads()
         }
-        return render(request, 'dashboard/client.html', context)
-        
+        return render(request, 'dashboard/provider.html', context)
     else:
-        # Client dashboard logic
-        client = request.user
-        
-        # Prefetch related data
-        consultations = Consultation.objects.filter(client=client).select_related('slot')
-        bookings = Booking.objects.filter(client=client).select_related('slot', 'service')
-        documents = Document.objects.filter(user=client)
-        
-        # Active counts
-        active_consultations = consultations.filter(
-            status__in=['pending', 'confirmed']
-        ).count()
-        
-        active_bookings = bookings.filter(
-            status__in=['pending', 'confirmed'],
-            slot__start_time__gte=timezone.now()
-        ).count()
-        
-        # Upcoming appointments
-        upcoming_consultations = consultations.filter(
-            slot__start_time__gte=timezone.now(),
-            status='confirmed'
-        ).order_by('slot__start_time')[:3]
-        
-        upcoming_bookings = bookings.filter(
-            slot__start_time__gte=timezone.now(),
-            status='confirmed'
-        ).order_by('slot__start_time')[:3]
-        
-        # Important documents
-        important_documents = documents.filter(
-            is_important=True,
-            reminder_date__isnull=False
-        ).order_by('reminder_date')[:3]
-        
-        # Add calculated fields
-        for doc in important_documents:
-            doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
-            doc.is_urgent = doc.reminder_days <= 3
-        
-        context = {
-            'active_consultations': active_consultations,
-            'active_bookings': active_bookings,
-            'documents_count': documents.count(),
-            'unread_notifications': Notification.objects.filter(
-                user=client,
-                is_read=False
-            ).count(),
-            'upcoming_consultations': upcoming_consultations,
-            'upcoming_bookings': upcoming_bookings,
-            'important_documents': important_documents,
-            #'active_ads': active_ads
-        }
-        template = 'dashboard/client.html'
-    
-    return render(request, template, context)
+        return client_dashboard(request)
 
 def calculate_percentage(numerator, denominator):
     """Safe percentage calculation with division by zero protection"""
@@ -244,44 +155,46 @@ def calculate_percentage(numerator, denominator):
 
 @login_required
 def client_dashboard(request):
-
-        # استعلامات البيانات الأساسية
-        consultations = Consultation.objects.filter(
-            client=request.user
-        ).select_related('slot')
-        
-        bookings = Booking.objects.filter(
-            client=request.user
-        ).select_related('slot', 'service')
-        
-        documents = Document.objects.filter(user=request.user)
-        
-        # الإحصائيات
-        context = {
-            'active_consultations': consultations.filter(
-                status__in=['pending', 'confirmed']
-            ).count(),
-            'active_bookings': bookings.filter(
-                status__in=['pending', 'confirmed'],
-                slot__start_time__gte=timezone.now()
-            ).count(),
-            'documents_count': documents.count(),
-            'unread_notifications': Notification.objects.filter(
-                user=request.user,
-                is_read=False
-            ).count(),
-            'upcoming_consultations': consultations.filter(
-                slot__start_time__gte=timezone.now(),
-                status='confirmed'
-            ).order_by('slot__start_time')[:3],
-            'upcoming_bookings': bookings.filter(
-                slot__start_time__gte=timezone.now(),
-                status='confirmed'
-            ).order_by('slot__start_time')[:3],
-            'important_documents': get_important_documents(documents),
-            'active_ads': get_active_ads()
-        }
-        return render(request, 'dashboard/client.html', context)
+    # استعلامات البيانات الأساسية
+    consultations = Consultation.objects.filter(
+        client=request.user
+    ).select_related('slot')
+    
+    bookings = Booking.objects.filter(
+        client=request.user
+    ).select_related('slot', 'service')
+    
+    documents = Document.objects.filter(user=request.user)
+    
+    # الإحصائيات
+    context = {
+        'active_consultations': consultations.filter(
+            status__in=['pending', 'confirmed']
+        ).count(),
+        'active_bookings': bookings.filter(
+            status__in=['pending', 'confirmed'],
+            slot__start_time__gte=timezone.now()
+        ).count(),
+        'documents_count': documents.count(),
+        'unread_notifications': Notification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).count(),
+        'upcoming_consultations': consultations.filter(
+            slot__start_time__gte=timezone.now(),
+            status='confirmed'
+        ).order_by('slot__start_time')[:3],
+        'upcoming_bookings': bookings.filter(
+            slot__start_time__gte=timezone.now(),
+            status='confirmed'
+        ).order_by('slot__start_time')[:3],
+        'important_documents': get_important_documents(documents),
+        'recent_notifications': Notification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:5],
+        'active_ads': get_active_ads()
+    }
+    return render(request, 'dashboard/client.html', context)
         
 
 
@@ -292,6 +205,7 @@ def dashboard(request):
     else:
       
         return client_dashboard(request)
+    
 def get_important_documents(documents):
     """معالجة آمنة للوثائق المهمة"""
     important_docs = []
