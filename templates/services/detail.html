@@ -3,48 +3,29 @@
 
 {% block title %}طلب استشارة جديدة{% endblock %}
 
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-    .select2-container--default .select2-selection--single {
-        height: 38px;
-        padding: 6px 12px;
-        border: 1px solid #ced4da;
-        border-radius: 0.375rem;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 24px;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">طلب استشارة جديدة</h5>
+                    <h5 class="mb-0">طلب استشارة جديدة - {{ service.title }}</h5>
                 </div>
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
+                        
+                        <!-- حقل الخدمة مخفي -->
+                        <input type="hidden" name="service" value="{{ service.id }}">
+
                         <div class="mb-3">
-                            <label class="form-label">الخدمة</label>
-                            <select name="service" class="form-select select2" id="service-select" required>
-                                <option value="" disabled selected>اختر خدمة</option>
-                                {% for service in services %}
-                                <option value="{{ service.id }}">{{ service.title }} ({{ service.category.name }}) - {{ service.price }} دج</option>
-                                {% endfor %}
-                            </select>
+                            {{ form.question.label_tag }}
+                            {{ form.question }}
+                            {% if form.question.errors %}
+                                <div class="text-danger small">{{ form.question.errors }}</div>
+                            {% endif %}
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">سؤالك</label>
-                            <textarea name="question" class="form-control" rows="5" placeholder="اشرح سؤالك أو استفسارك بالتفصيل..." required></textarea>
-                        </div>
+
                         <div class="d-flex justify-content-between">
                             <a href="{% url 'consultation_list' %}" class="btn btn-secondary">إلغاء</a>
                             <button type="submit" class="btn btn-primary">إرسال الطلب</button>
@@ -55,28 +36,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-$(document).ready(function() {
-    // تهيئة Select2 مع البحث
-    $('#service-select').select2({
-        placeholder: "ابحث واختر خدمة",
-        allowClear: true,
-        language: {
-            noResults: function() {
-                return "لا توجد نتائج";
-            }
-        }
-    });
-    
-    // إذا كان هناك خدمة محددة مسبقاً (في حالة التعديل)
-    {% if selected_service %}
-        $('#service-select').val({{ selected_service }}).trigger('change');
-    {% endif %}
-});
-</script>
 {% endblock %}
