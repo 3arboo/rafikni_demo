@@ -119,7 +119,7 @@ def edit_profile(request):
 # ---- لوحة التحكم ---- #
 @login_required
 def provider_dashboard(request):
-    try:
+    
         active_ads = Advertisement.get_active_ads()  # Assuming you have a manager method
         
         if request.user.role == User.Role.PROVIDER:
@@ -233,16 +233,11 @@ def provider_dashboard(request):
                 'active_ads': active_ads
             }
             return render(request, 'dashboard/client.html', context)
-            
-    except Exception as e:
-
-        return render(request, 'dashboard/error.html', {
-            'error': 'حدث خطأ في تحميل البيانات. يرجى المحاولة لاحقًا.'
-        }, status=500)
+     
 
 @login_required
 def client_dashboard(request):
-    try:
+
         # استعلامات البيانات الأساسية
         consultations = Consultation.objects.filter(
             client=request.user
@@ -281,11 +276,7 @@ def client_dashboard(request):
         }
         return render(request, 'dashboard/client.html', context)
         
-    except Exception as e:
-      
-        return render(request, 'dashboard/error.html', {
-            'error': 'حدث خطأ في تحميل البيانات. يرجى المحاولة لاحقًا.'
-        }, status=500)
+
 
 @login_required
 def dashboard(request):
