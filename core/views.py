@@ -122,121 +122,144 @@ def edit_profile(request):
 # ---- لوحة التحكم ---- #
 @login_required
 def provider_dashboard(request):
+    consultant = get_object_or_404(Consultant, user=request.user)
     
-        active_ads = Advertisement.get_active_ads()  # Assuming you have a manager method
+    # Common data for both roles
+    pending_consultations = Consultation.objects.filter(
+        consultant=consultant,
+        status='pending'
+    ).order_by('-created_at')[:5]
+    
+    active_ads = Advertisement.get_active_ads()
+    
+    if request.user.role == User.Role.PROVIDER:
+        # Provider-specific calculations
+        provider = request.user
         
-        if request.user.role == User.Role.PROVIDER:
-            # Basic counts
-            active_services = Service.objects.filter(
-                provider=request.user,
-                is_active=True
-            ).count()
-            
-            monthly_consultations = Consultation.objects.filter(
-                slot__provider=request.user,
-                created_at__month=timezone.now().month
-            ).count()
-            
-            # Rating calculation with proper null handling
-            avg_rating = Review.objects.filter(
-                service__provider=request.user
-            ).aggregate(
-                avg_rating=Coalesce(Avg('rating'), 0.0)
-            )['avg_rating']
-            
-            # Booking calculations with division protection
-            bookings = Booking.objects.filter(service__provider=request.user)
-            total_bookings = bookings.count() or 1  # Prevent division by zero
-            confirmed_bookings = bookings.filter(status='confirmed').count()
-            completed_bookings = bookings.filter(status='completed').count()
-            
-            booking_rate = round((confirmed_bookings / total_bookings * 100), 2)
-            completion_rate = round((completed_bookings / total_bookings * 100), 2)
-            satisfaction_rate = round(float(avg_rating) * 20, 1)
-            
-            # Simplify upcoming appointments query
-            upcoming_appointments = Consultation.objects.filter(
-                slot__provider=request.user,
-                slot__start_time__gte=timezone.now(),
-                status='confirmed'
-            ).select_related('slot', 'client')[:5]
-            
-            return render(request, 'dashboard/provider.html', {
-                'active_services': active_services,
-                'monthly_consultations': monthly_consultations,
-                'avg_rating': round(float(avg_rating), 1),
-                'new_consultation_requests': ConsultationRequest.objects.filter(
-                    consultant=request.user,
-                    status='pending'
-                )[:5],
-                'recent_reviews': Review.objects.filter(
-                    service__provider=request.user
-                ).order_by('-created_at')[:3],
-                'upcoming_appointments': upcoming_appointments,
-                'booking_rate': booking_rate,
-                'satisfaction_rate': satisfaction_rate,
-                'completion_rate': completion_rate,
-                'active_ads': active_ads
-            })
+        # Get all provider services in one query
+        provider_services = Service.objects.filter(provider=provider)
         
-       
-        else:
-            # Client dashboard - improved version
-            consultations = Consultation.objects.filter(client=request.user).select_related('slot')
-            bookings = Booking.objects.filter(client=request.user).select_related('slot', 'service')
-            documents = Document.objects.filter(user=request.user)
-            
-            # Active counts with fallback
-            active_consultations = consultations.filter(
-                status__in=['pending', 'confirmed']
-            ).count() or 0
-            
-            active_bookings = bookings.filter(
-                status__in=['pending', 'confirmed'],
-                slot__start_time__gte=timezone.now()
-            ).count() or 0
-            
-            # Upcoming appointments with null checks
-            upcoming_consultations = consultations.filter(
-                slot__start_time__gte=timezone.now(),
-                status='confirmed'
-            ).order_by('slot__start_time')[:3] or []
-            
-            upcoming_bookings = bookings.filter(
-                slot__start_time__gte=timezone.now(),
-                status='confirmed'
-            ).order_by('slot__start_time')[:3] or []
-            
-            # Important documents with safe date handling
-            important_documents = []
-            docs = documents.filter(
-                is_important=True,
-                reminder_date__isnull=False
-            ).order_by('reminder_date')[:3]
-            
-            for doc in docs:
-                try:
-                    doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
-                    doc.is_urgent = doc.reminder_days <= 3
-                    important_documents.append(doc)
-                except Exception:
-                    continue
-            
-            context = {
-                'active_consultations': active_consultations,
-                'active_bookings': active_bookings,
-                'documents_count': documents.count(),
-                'unread_notifications': Notification.objects.filter(
-                    user=request.user,
-                    is_read=False
-                ).count(),
-                'upcoming_consultations': upcoming_consultations,
-                'upcoming_bookings': upcoming_bookings,
-                'important_documents': important_documents,
-                'active_ads': active_ads
-            }
-            return render(request, 'dashboard/client.html', context)
-     
+        # Calculate metrics
+        active_services = provider_services.filter(is_active=True).count()
+        
+        current_month = timezone.now().month
+        monthly_consultations = Consultation.objects.filter(
+            slot__provider=provider,
+            created_at__month=current_month
+        ).count()
+        
+        # Rating calculation
+        rating_data = Review.objects.filter(
+            service__provider=provider
+        ).aggregate(
+            avg_rating=Coalesce(Avg('rating'), 0.0),
+            count=Count('id')
+        )
+        
+        # Booking calculations
+        bookings = Booking.objects.filter(service__provider=provider)
+        total_bookings = bookings.count()
+        
+        booking_status = bookings.aggregate(
+            confirmed=Count('id', filter=Q(status='confirmed')),
+            completed=Count('id', filter=Q(status='completed'))
+        )
+        
+        # Calculate rates safely
+        booking_rate = calculate_percentage(booking_status['confirmed'], total_bookings)
+        completion_rate = calculate_percentage(booking_status['completed'], total_bookings)
+        satisfaction_rate = round(float(rating_data['avg_rating']) * 20, 1)
+        
+        # Get upcoming appointments
+        upcoming_appointments = Consultation.objects.filter(
+            slot__provider=provider,
+            slot__start_time__gte=timezone.now(),
+            status='confirmed'
+        ).select_related('slot', 'client')[:5]
+        
+        context = {
+            'active_services': active_services,
+            'monthly_consultations': monthly_consultations,
+            'avg_rating': round(float(rating_data['avg_rating']), 1),
+            'review_count': rating_data['count'],
+            'new_consultation_requests': ConsultationRequest.objects.filter(
+                consultant=provider,
+                status='pending'
+            )[:5],
+            'recent_reviews': Review.objects.filter(
+                service__provider=provider
+            ).order_by('-created_at')[:3],
+            'upcoming_appointments': upcoming_appointments,
+            'booking_rate': booking_rate,
+            'satisfaction_rate': satisfaction_rate,
+            'completion_rate': completion_rate,
+            'active_ads': active_ads
+        }
+        template = 'dashboard/provider.html'
+        
+    else:
+        # Client dashboard logic
+        client = request.user
+        
+        # Prefetch related data
+        consultations = Consultation.objects.filter(client=client).select_related('slot')
+        bookings = Booking.objects.filter(client=client).select_related('slot', 'service')
+        documents = Document.objects.filter(user=client)
+        
+        # Active counts
+        active_consultations = consultations.filter(
+            status__in=['pending', 'confirmed']
+        ).count()
+        
+        active_bookings = bookings.filter(
+            status__in=['pending', 'confirmed'],
+            slot__start_time__gte=timezone.now()
+        ).count()
+        
+        # Upcoming appointments
+        upcoming_consultations = consultations.filter(
+            slot__start_time__gte=timezone.now(),
+            status='confirmed'
+        ).order_by('slot__start_time')[:3]
+        
+        upcoming_bookings = bookings.filter(
+            slot__start_time__gte=timezone.now(),
+            status='confirmed'
+        ).order_by('slot__start_time')[:3]
+        
+        # Important documents
+        important_documents = documents.filter(
+            is_important=True,
+            reminder_date__isnull=False
+        ).order_by('reminder_date')[:3]
+        
+        # Add calculated fields
+        for doc in important_documents:
+            doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
+            doc.is_urgent = doc.reminder_days <= 3
+        
+        context = {
+            'active_consultations': active_consultations,
+            'active_bookings': active_bookings,
+            'documents_count': documents.count(),
+            'unread_notifications': Notification.objects.filter(
+                user=client,
+                is_read=False
+            ).count(),
+            'upcoming_consultations': upcoming_consultations,
+            'upcoming_bookings': upcoming_bookings,
+            'important_documents': important_documents,
+            'active_ads': active_ads
+        }
+        template = 'dashboard/client.html'
+    
+    return render(request, template, context)
+
+def calculate_percentage(numerator, denominator):
+    """Safe percentage calculation with division by zero protection"""
+    if denominator == 0:
+        return 0.0
+    return round((numerator / denominator) * 100, 2)
 
 @login_required
 def client_dashboard(request):

@@ -160,13 +160,20 @@ class Consultation(models.Model):
     )
     
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_consultations')
-    consultant = models.ForeignKey(Consultant, on_delete=models.CASCADE, related_name='consultations')
+    consultant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='consultant_consultations')  # التعديل هنا
     slot = models.ForeignKey(ConsultationSlot, on_delete=models.SET_NULL, null=True, blank=True)
     question = models.TextField()
     response = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    @property
+    def consultant_user(self):
+        return self.consultant.user
+    
+    def __str__(self):
+        return f"استشارة #{self.id} - {self.client.username}"
     
     
     def save(self, *args, **kwargs):
