@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}المستشارون المتاحون - RaFiKNi{% endblock %}
 
@@ -26,6 +27,7 @@
                         <!-- Category Filter -->
                         <div class="mb-3">
                             <label class="form-label">التخصصات</label>
+                            {% if categories %}
                             <div class="list-group">
                                 <a href="{% url 'browse_consultants' %}" 
                                    class="list-group-item list-group-item-action {% if not selected_category %}active{% endif %}">
@@ -33,11 +35,14 @@
                                 </a>
                                 {% for category in categories %}
                                 <a href="{% url 'browse_consultants' %}?category={{ category.id }}" 
-                                   class="list-group-item list-group-item-action {% if selected_category and selected_category.id == category.id %}active{% endif %}">
+                                   class="list-group-item list-group-item-action {% if selected_category == category.id %}active{% endif %}">
                                     {{ category.name }} ({{ category.consultant_count }})
                                 </a>
                                 {% endfor %}
                             </div>
+                            {% else %}
+                            <p class="text-muted">لا توجد تخصصات متاحة</p>
+                            {% endif %}
                         </div>
                         
                         <button type="submit" class="btn btn-primary w-100">
@@ -47,8 +52,8 @@
                 </div>
             </div>
             
-            <!-- إعلان جانبي -->
-            {% if active_ads %}
+            <!-- Advertisement -->
+            {% if active_ads and active_ads.0.image %}
             <div class="card mt-4 border-0 shadow-sm">
                 <div class="card-body p-0">
                     <a href="{{ active_ads.0.link }}" target="_blank">
@@ -80,16 +85,17 @@
             <div class="row">
                 {% for consultant in consultants %}
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card-header position-relative" style="height: 200px;">
-                <img src="{% if consultant.user.profile.profile_image %}{{ consultant.user.profile.profile_image.url }}{% else %}{% static 'images/default-profile.jpg' %}{% endif %}" 
-                     class="card-img-top h-100" alt="{{ consultant.user.full_name }}" 
-                     style="object-fit: cover;">
-                <div class="position-absolute bottom-0 start-0 p-2">
-                    {% for category in consultant.categories.all|slice:":2" %}
-                    <span class="badge bg-primary me-1">{{ category.name }}</span>
-                    {% endfor %}
-                </div>
-            </div>
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header position-relative" style="height: 200px;">
+                            <img src="{% if consultant.user.profile.profile_image %}{{ consultant.user.profile.profile_image.url }}{% else %}{% static 'images/default-profile.jpg' %}{% endif %}" 
+                                 class="card-img-top h-100" alt="{{ consultant.user.full_name }}" 
+                                 style="object-fit: cover;">
+                            <div class="position-absolute bottom-0 start-0 p-2">
+                                {% for category in consultant.categories.all|slice:":2" %}
+                                <span class="badge bg-primary me-1">{{ category.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
                         <div class="card-body">
                             <h5 class="card-title">{{ consultant.user.full_name }}</h5>
                             <p class="card-text text-muted">
@@ -133,10 +139,10 @@
                     </li>
                     {% endif %}
                     
-                    {% for num in consultants.paginator.page_range %}
-                    {% if consultants.number == num %}
+                    {% for num in consultants.paginator.get_elided_page_range %}
+                    {% if num == consultants.number %}
                     <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
-                    {% elif num > consultants.number|add:'-3' and num < consultants.number|add:'3' %}
+                    {% elif num != consultants.paginator.ELLIPSIS %}
                     <li class="page-item"><a class="page-link" href="?page={{ num }}&q={{ search_query }}{% if selected_category %}&category={{ selected_category.id }}{% endif %}">{{ num }}</a></li>
                     {% endif %}
                     {% endfor %}
@@ -191,7 +197,6 @@
 
 <script>
 $(function() {
-    // Auto-complete for consultants search
     $("#autocomplete").autocomplete({
         source: "{% url 'autocomplete_consultants' %}",
         minLength: 2,

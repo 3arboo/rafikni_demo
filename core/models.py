@@ -4,7 +4,8 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify  # Import slugify
 import uuid
-from django.utils import timezone
+from django.utils import timezone 
+from django.db.models import Avg
 # models.py
 
 class UserManager(BaseUserManager):
@@ -126,6 +127,15 @@ class Consultant(models.Model):
     available = models.BooleanField(default=True)
     rating = models.FloatField(default=0)
     
+    @property
+    def avg_rating(self):
+        reviews = Review.objects.filter(service__provider=self.user)
+        avg = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+        return round(avg, 1)
+
+    @property
+    def review_count(self):
+        return Review.objects.filter(service__provider=self.user).count()
     def __str__(self):
         return f"{self.user.username} - مستشار"
     
