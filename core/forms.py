@@ -133,10 +133,15 @@ class ServiceForm(forms.ModelForm):
             'duration': forms.TextInput(attrs={'placeholder': 'HH:MM:SS'}),
         }
 
+from django import forms
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from .models import ConsultationSlot
+
 class ConsultationSlotForm(forms.ModelForm):
     class Meta:
         model = ConsultationSlot
-        fields = ('start_time', 'end_time')
+        fields = ('start_time', 'end_time', 'is_recurring')
         labels = {
             'start_time': _('وقت البدء'),
             'end_time': _('وقت الانتهاء'),
@@ -145,6 +150,14 @@ class ConsultationSlotForm(forms.ModelForm):
             'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)  # استخراج user من kwargs
+        super().__init__(*args, **kwargs)
+        
+        # يمكنك إضافة أي تعديلات على الحقول هنا بناءً على المستخدم
+        if self.user:
+            self.fields['start_time'].widget.attrs['min'] = timezone.now().strftime('%Y-%m-%dT%H:%M')
     
     def clean(self):
         cleaned_data = super().clean()
@@ -156,6 +169,18 @@ class ConsultationSlotForm(forms.ModelForm):
                 raise forms.ValidationError(_('وقت الانتهاء يجب أن يكون بعد وقت البدء'))
             if start_time < timezone.now():
                 raise forms.ValidationError(_('لا يمكن تحديد موعد في الماضي'))
+            
+            # تحقق إضافي إذا كان المستخدم متوفراً
+            if self.user:
+                overlapping_slots = ConsultationSlot.objects.filter(
+                    provider=self.user,
+                    start_time__lt=end_time,
+                    end_time__gt=start_time
+                )
+                if overlapping_slots.exists():
+                    raise forms.ValidationError(_('هذا الموعد يتعارض مع مواعيد أخرى لديك'))
+        
+        return cleaned_data
 
 class DocumentForm(forms.ModelForm):
     class Meta:
