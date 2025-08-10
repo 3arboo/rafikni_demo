@@ -133,15 +133,12 @@ class ServiceForm(forms.ModelForm):
             'duration': forms.TextInput(attrs={'placeholder': 'HH:MM:SS'}),
         }
 
-from django import forms
-from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
-from .models import ConsultationSlot
 
 class ConsultationSlotForm(forms.ModelForm):
+    is_recurring = forms.BooleanField(required=False)  
     class Meta:
         model = ConsultationSlot
-        fields = ('start_time', 'end_time', 'is_recurring')
+        fields = ('start_time', 'end_time')
         labels = {
             'start_time': _('وقت البدء'),
             'end_time': _('وقت الانتهاء'),
