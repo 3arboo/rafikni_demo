@@ -8,7 +8,7 @@ from .models import (
     User, Profile, Service, ServiceCategory, 
     ConsultationSlot, Consultation, Document,
     Notification, Review, Advertisement, FAQ,
-    ConsultationRequest , Consultant ,Booking
+    ConsultationRequest, Consultant, Booking
 )
 from .forms import (
     UserRegistrationForm, UserLoginForm,
@@ -17,25 +17,25 @@ from .forms import (
 )
 from django.utils.text import slugify
 import uuid
-from django.contrib.auth import login , logout
-# ---- المصادقة والملف الشخصي ---- #
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, logout, authenticate
+from django.http import JsonResponse
 
+# ---- المصادقة والملف الشخصي ---- #
 def register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.username = user.email  # حتى لو ما تستخدم username
+            user.username = user.email
             user.save()
 
-            Profile.objects.get_or_create(user=user)  # إنشاء البروفايل
+            Profile.objects.get_or_create(user=user)
 
             authenticated_user = authenticate(
                 request,
                 username=user.email,
                 password=form.cleaned_data['password1']
-                )
+            )
             
             if authenticated_user is not None:
                 login(request, authenticated_user)
@@ -55,24 +55,19 @@ def register(request):
 
 def user_login(request):
     if request.method == 'POST':
-        # التعديل هنا: إزالة وسيط request
-        form = UserLoginForm(request.POST)  # كان: form = UserLoginForm(request, data=request.POST)
-        
+        form = UserLoginForm(request, data=request.POST)
         if form.is_valid():
-            user = form.cleaned_data['user']
+            user = form.get_user()
             
-            # تذكرني functionality
-            if not form.cleaned_data['remember_me']:
-                request.session.set_expiry(0)  # تنتهي الجلسة عند إغلاق المتصفح
+            if not form.cleaned_data.get('remember_me', False):
+                request.session.set_expiry(0)
             
             login(request, user)
             
-            # التحقق من تفعيل الحساب
             if not user.is_active:
                 messages.error(request, 'حسابك غير مفعل. يرجى التواصل مع الدعم الفني.')
                 return redirect('login')
             
-            # التوجيه حسب الدور
             if user.role == User.Role.PROVIDER:
                 messages.success(request, f'مرحباً بعودتك، {user.full_name}!')
                 return redirect('provider_dashboard')
@@ -80,10 +75,8 @@ def user_login(request):
                 messages.success(request, f'مرحباً بعودتك، {user.full_name}!')
                 return redirect('client_dashboard')
         else:
-            # عرض أخطاء محددة
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
+            for error in form.errors.values():
+                messages.error(request, error)
     else:
         form = UserLoginForm()
     
@@ -99,57 +92,33 @@ def switch_role(request):
     if request.method == 'POST':
         request.user.switch_role()
         messages.success(request, f'تم التبديل إلى {request.user.get_role_display()}')
-        return redirect('dashboard')
-    
+    return redirect('dashboard')
+
 @login_required
 def edit_profile(request):
     profile, created = Profile.objects.get_or_create(user=request.user)
-    form = ProfileForm(instance=profile)
-
+    
     if request.method == 'POST':
         form = ProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
+            messages.success(request, 'تم تحديث الملف الشخصي بنجاح!')
             return redirect('profile')
+    else:
+        form = ProfileForm(instance=profile)
 
     return render(request, 'profile/edit.html', {'form': form})
 
 # ---- لوحة التحكم ---- #
 @login_required
-def client_dashboard(request):
-    consultations = Consultation.objects.filter(client=request.user)
-    documents = Document.objects.filter(user=request.user)
-    return render(request, 'dashboard/client.html', {
-        'consultations': consultations,
-        'documents': documents
-    })
-
-@login_required
-def provider_dashboard(request):
-    services = Service.objects.filter(provider=request.user)
-    consultations = Consultation.objects.filter(slot__provider=request.user)
-    reviews = Review.objects.filter(service__provider=request.user)
-    return render(request, 'dashboard/provider.html', {
-        'services': services,
-        'consultations': consultations,
-        'reviews': reviews
-    })
-@login_required
-def provider_profile(request):
-    if request.user.role != User.Role.PROVIDER:
-        messages.error(request, 'هذه الصفحة لمقدمي الخدمات فقط')
-        return redirect('dashboard')
-    
-    consultant = get_object_or_404(Consultant, user=request.user)
-    services = Service.objects.filter(provider=request.user)
-    
-    return render(request, 'profile/provider_profile.html', {
-        'consultant': consultant,
-        'services': services
-    })
-# views.py
-@login_required
 def dashboard(request):
+    # الحصول على الإعلانات النشطة
+    active_ads = Advertisement.objects.filter(
+        is_active=True,
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date()
+    ).order_by('?')[:3]  # 3 إعلانات عشوائية
+
     if request.user.role == User.Role.PROVIDER:
         # لوحة مقدم الخدمة
         services = Service.objects.filter(provider=request.user)
@@ -200,7 +169,7 @@ def dashboard(request):
         
         booking_rate = round((confirmed_bookings / total_bookings * 100), 2) if total_bookings > 0 else 0
         completion_rate = round((completed_bookings / total_bookings * 100), 2) if total_bookings > 0 else 0
-        satisfaction_rate = round(avg_rating * 20, 1) if avg_rating > 0 else 0  # تحويل من 5 إلى 100
+        satisfaction_rate = round(avg_rating * 20, 1) if avg_rating > 0 else 0
         
         return render(request, 'dashboard/provider.html', {
             'active_services': active_services,
@@ -213,7 +182,8 @@ def dashboard(request):
             'upcoming_appointments': upcoming_appointments,
             'booking_rate': booking_rate,
             'satisfaction_rate': satisfaction_rate,
-            'completion_rate': completion_rate
+            'completion_rate': completion_rate,
+            'active_ads': active_ads
         })
     else:
         # لوحة العميل
@@ -267,46 +237,31 @@ def dashboard(request):
             'unread_notifications': unread_notifications,
             'upcoming_consultations': upcoming_consultations,
             'upcoming_bookings': upcoming_bookings,
-            'important_documents': important_documents
+            'important_documents': important_documents,
+            'active_ads': active_ads
         })
 
-def consultation_list(request):
-    status = request.GET.get('status', 'all')
+@login_required
+def provider_profile(request):
+    if request.user.role != User.Role.PROVIDER:
+        messages.error(request, 'هذه الصفحة لمقدمي الخدمات فقط')
+        return redirect('dashboard')
     
-    if request.user.role == User.Role.CLIENT:
-        consultations = ConsultationRequest.objects.filter(client=request.user)
-    else:
-        consultations = ConsultationRequest.objects.filter(consultant=request.user)
+    consultant = get_object_or_404(Consultant, user=request.user)
+    services = Service.objects.filter(provider=request.user)
     
-    if status != 'all':
-        consultations = consultations.filter(status=status)
-    
-    consultations = consultations.order_by('-created_at')
-    
-    return render(request, 'consultations/list.html', {
-        'consultations': consultations,
-        'status': status
+    return render(request, 'profile/provider_profile.html', {
+        'consultant': consultant,
+        'services': services
     })
 
-@login_required
-def inquiries_list(request):
-    inquiries = ConsultationRequest.objects.filter(client=request.user)
-    return render(request, 'inquiries/list.html', {
-        'inquiries': inquiries
-    })
-
-@login_required
-def switch_role(request):
-    if request.method == 'POST':
-        request.user.switch_role()
-        messages.success(request, 'تم تغيير الدور بنجاح!')
-    return redirect('dashboard')
 # ---- إدارة الخدمات ---- #
 @login_required
 def service_list(request):
     services = Service.objects.filter(provider=request.user)
     return render(request, 'services/list.html', {'services': services})
 
+@login_required
 def create_service(request):
     if request.method == 'POST':
         form = ServiceForm(request.POST, request.FILES)
@@ -314,10 +269,7 @@ def create_service(request):
             service = form.save(commit=False)
             service.provider = request.user
             
-            # تعيين is_active دائمًا True
-            service.is_active = True
-            
-            # إنشاء slug فريد إذا لم يتم توفيره
+            # إنشاء slug فريد
             if not service.slug:
                 base_slug = slugify(service.title)
                 service.slug = f"{base_slug}-{uuid.uuid4().hex[:6]}"
@@ -330,12 +282,11 @@ def create_service(request):
     
     return render(request, 'services/create.html', {'form': form})
 
-
 @login_required
 def update_service(request, pk):
     service = get_object_or_404(Service, pk=pk, provider=request.user)
     if request.method == 'POST':
-        form = ServiceForm(request.POST, instance=service)
+        form = ServiceForm(request.POST, request.FILES, instance=service)
         if form.is_valid():
             form.save()
             messages.success(request, 'تم تحديث الخدمة بنجاح!')
@@ -368,53 +319,60 @@ def create_slot(request):
     return render(request, 'consultations/create_slot.html', {'form': form})
 
 # ---- البحث والاكتشاف ---- #
-def browse_services(request):
+def browse_consultants(request):
     category_id = request.GET.get('category')
     query = request.GET.get('q')
     
-    services = Service.objects.filter(is_active=True)
+    consultants = Consultant.objects.filter(available=True)
     
     if category_id:
-        services = services.filter(category_id=category_id)
+        consultants = consultants.filter(categories__id=category_id)
     
     if query:
-        services = services.filter(
-        Q(title__icontains=query) |
-        Q(description__icontains=query) |
-         Q(category__name__icontains=query)|
-        Q(provider__first_name__icontains=query) |
-        Q(provider__last_name__icontains=query) |
-        Q(provider__full_name__icontains=query)|
-        Q(provider__email__icontains=query))
-    
+        consultants = consultants.filter(
+            Q(user__full_name__icontains=query) |
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(categories__name__icontains=query)
+        ).distinct()
     
     categories = ServiceCategory.objects.annotate(
-        service_count=Count('service')
-    ).order_by('-service_count')
+        consultant_count=Count('consultant')
+    ).order_by('-consultant_count')
     
-    paginator = Paginator(services, 10)
+    paginator = Paginator(consultants, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    return render(request, 'services/browse.html', {
-        'services': page_obj,
+    # الحصول على الإعلانات النشطة
+    active_ads = Advertisement.objects.filter(
+        is_active=True,
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date()
+    ).order_by('?')[:2]  # 2 إعلانات عشوائية
+    
+    return render(request, 'consultants/list.html', {
+        'consultants': page_obj,
         'categories': categories,
         'selected_category': int(category_id) if category_id else None,
         'search_query': query or '',
-        'request': request
+        'active_ads': active_ads
     })
 
-def service_detail(request, slug):
-    service = get_object_or_404(Service, slug=slug, is_active=True)
-    reviews = service.reviews.all().order_by('-created_at')
-    similar_services = Service.objects.filter(
-        category=service.category,
-        is_active=True
-    ).exclude(id=service.id).order_by('?')[:3]
+def consultant_detail(request, pk):
+    consultant = get_object_or_404(Consultant, pk=pk, available=True)
+    services = Service.objects.filter(provider=consultant.user, is_active=True)
+    reviews = Review.objects.filter(service__provider=consultant.user).order_by('-created_at')
+    available_slots = ConsultationSlot.objects.filter(
+        provider=consultant.user,
+        is_booked=False,
+        start_time__gte=timezone.now()
+    ).order_by('start_time')
+    
     # حساب متوسط التقييمات
     avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
     
-    # التحقق إذا كان المستخدم قد قام بتقييم هذه الخدمة من قبل
+    # التحقق إذا كان المستخدم قد قام بتقييم هذا المستشار من قبل
     user_review = None
     if request.user.is_authenticated:
         user_review = reviews.filter(reviewer=request.user).first()
@@ -427,21 +385,30 @@ def service_detail(request, slug):
         form = ReviewForm(request.POST)
         if form.is_valid():
             review = form.save(commit=False)
-            review.service = service
+            review.service = services.first()  # ربط التقييم بأحد خدمات المستشار
             review.reviewer = request.user
             review.save()
-            messages.success(request, 'شكراً لتقييمك هذه الخدمة!')
-            return redirect('service_detail', slug=slug)
+            messages.success(request, 'شكراً لتقييمك هذا المستشار!')
+            return redirect('consultant_detail', pk=pk)
     else:
         form = ReviewForm(instance=user_review)
     
-    return render(request, 'services/detail.html', {
-        'service': service,
-        'similar_services':similar_services,
+    # الحصول على الإعلانات النشطة
+    active_ads = Advertisement.objects.filter(
+        is_active=True,
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date()
+    ).order_by('?')[:1]  # 1 إعلان عشوائي
+    
+    return render(request, 'consultants/detail.html', {
+        'consultant': consultant,
+        'services': services,
         'reviews': reviews,
+        'available_slots': available_slots,
         'avg_rating': round(avg_rating, 1),
         'user_review': user_review,
-        'form': form
+        'form': form,
+        'active_ads': active_ads
     })
 
 # ---- إدارة الوثائق ---- #
@@ -464,7 +431,6 @@ def upload_document(request):
         form = DocumentForm()
     return render(request, 'documents/upload.html', {'form': form})
 
-
 @login_required
 def delete_document(request, pk):
     document = get_object_or_404(Document, pk=pk, user=request.user)
@@ -476,58 +442,32 @@ def delete_document(request, pk):
 
 # ---- نظام الاستشارات ---- #
 @login_required
-def request_consultation(request, service_id):
-    service = get_object_or_404(Service, id=service_id)
-
+def request_consultation(request, consultant_id):
+    consultant = get_object_or_404(Consultant, id=consultant_id)
+    
     if request.method == 'POST':
         form = ConsultationRequestForm(request.POST)
         if form.is_valid():
             consultation = form.save(commit=False)
             consultation.client = request.user
-            consultation.service = service  # ربط الخدمة تلقائيًا
+            consultation.consultant = consultant.user
             consultation.save()
-            return redirect('consultation_list')
-    else:
-        form = ConsultationRequestForm()
-
-    return render(request, 'consultations/request.html', {
-        'form': form,
-        'service': service
-    })
-
-
-@login_required
-def consultant_detail(request, pk):
-    consultant = get_object_or_404(Consultant, pk=pk)
-    
-    # جلب المواعيد المتاحة للمستشار
-    available_slots = ConsultationSlot.objects.filter(
-        provider=consultant.user,
-        is_booked=False,
-        start_time__gt=timezone.now()  # فقط المواعيد المستقبلية
-    ).order_by('start_time')
-    
-    if request.method == 'POST':
-        form_type = request.POST.get('form_type')
-        
-        if form_type == 'consultation_request':
-            # معالجة نموذج إرسال الاستشارة
-            category = get_object_or_404(ServiceCategory, id=request.POST.get('category'))
-            question = request.POST.get('question')
             
-            ConsultationRequest.objects.create(
-                client=request.user,
-                consultant=consultant.user,
-                category=category,
-                question=question
+            # إرسال إشعار للمستشار
+            Notification.objects.create(
+                user=consultant.user,
+                message=f"لديك طلب استشارة جديد من {request.user.full_name}",
+                link=f"/consultations/{consultation.id}/"
             )
             
-            messages.success(request, 'تم إرسال استشارتك بنجاح!')
+            messages.success(request, 'تم إرسال طلب الاستشارة بنجاح!')
             return redirect('consultation_list')
+    else:
+        form = ConsultationRequestForm(initial={'consultant': consultant.user})
     
-    return render(request, 'services/consultant_detail.html', {
-        'consultant': consultant,
-        'available_slots': available_slots
+    return render(request, 'consultations/request.html', {
+        'form': form,
+        'consultant': consultant
     })
 
 @login_required
@@ -537,18 +477,17 @@ def book_consultation(request, slot_id):
     # إذا كان الموعد غير متاح (محجوز مسبقًا) أو انتهى وقته
     if slot.start_time <= timezone.now():
         messages.error(request, 'عذرًا، هذا الموعد لم يعد متاحًا.')
-        return redirect('consultants_list')
+        return redirect('consultant_detail', pk=slot.provider.consultant.id)
     
     # تأكد أن المستخدم الحالي ليس هو مقدم الخدمة
     if slot.provider == request.user:
         messages.error(request, 'لا يمكنك حجز موعد خاص بك.')
-        return redirect('consultants_list')
+        return redirect('consultant_detail', pk=slot.provider.consultant.id)
     
     # إنشاء استشارة جديدة
     consultation = Consultation.objects.create(
         slot=slot,
         client=request.user,
-        service=slot.service,  # إذا كان الموعد مرتبطًا بخدمة معينة
         status=Consultation.Status.CONFIRMED
     )
     
@@ -569,7 +508,6 @@ def book_consultation(request, slot_id):
 # ---- نظام الإشعارات ---- #
 @login_required
 def notifications(request):
-
     if request.method == 'GET':
         # تحديث حالة القراءة عند زيارة الصفحة
         Notification.objects.filter(
@@ -578,7 +516,6 @@ def notifications(request):
         ).update(is_read=True)
 
     # معالجة طلبات تعليم الكل كمقروء أو حذف الكل
-
     if 'mark_all' in request.GET:
         Notification.objects.filter(user=request.user).update(is_read=True)
         messages.success(request, 'تم تعليم جميع الإشعارات كمقروءة')
@@ -594,67 +531,101 @@ def notifications(request):
     return render(request, 'notifications/list.html', {
         'notifications': notifications
     })
+
 # ---- الأسئلة الشائعة ---- #
 def faq_list(request):
     featured_faqs = FAQ.objects.filter(is_featured=True).order_by('question')
     other_faqs = FAQ.objects.filter(is_featured=False).order_by('question')
     
+    # الحصول على الإعلانات النشطة
+    active_ads = Advertisement.objects.filter(
+        is_active=True,
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date()
+    ).order_by('?')[:2]  # 2 إعلانات عشوائية
+    
     return render(request, 'faq/list.html', {
         'featured_faqs': featured_faqs,
-        'other_faqs': other_faqs
+        'other_faqs': other_faqs,
+        'active_ads': active_ads
     })
 
 def home(request):
-    return render(request , 'home.html')
-
-
-
-# views.py
-def consultants_list(request):
-    consultants = Consultant.objects.filter(available=True)
-    categories = ServiceCategory.objects.all()
+    # الحصول على الإعلانات النشطة للصفحة الرئيسية
+    featured_ads = Advertisement.objects.filter(
+        is_active=True,
+        is_featured=True,
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date()
+    ).order_by('-created_at')[:3]
     
-    # Filtering
-    category_id = request.GET.get('category')
-    search_query = request.GET.get('q')
+    featured_consultants = Consultant.objects.filter(
+        available=True,
+        is_featured=True
+    ).order_by('?')[:4]  # 4 مستشارين مميزين
     
-    if category_id:
-        consultants = consultants.filter(categories__id=category_id)
-    if search_query:
-        consultants = consultants.filter(
-            Q(user__full_name__icontains=search_query) |
-            Q(user__first_name__icontains=search_query) |
-            Q(user__last_name__icontains=search_query) |
-            Q(categories__name__icontains=search_query)
-        ).distinct()
+    return render(request, 'home.html', {
+        'featured_ads': featured_ads,
+        'featured_consultants': featured_consultants
+    })
+
+def custom_logout(request):
+    logout(request)
+    messages.success(request, 'تم تسجيل الخروج بنجاح')
+    return redirect('home')
+
+def handler404(request, exception):
+    return render(request, "404.html", status=404)
+
+def autocomplete_consultants(request):
+    query = request.GET.get('term', '')
+    consultants = Consultant.objects.filter(
+        Q(user__full_name__icontains=query) |
+        Q(categories__name__icontains=query),
+        available=True
+    ).distinct()[:10]
     
-    return render(request, 'services/consultants.html', {
-        'consultants': consultants,
-        'categories': categories
+    results = []
+    for consultant in consultants:
+        results.append({
+            'id': consultant.id,
+            'label': consultant.user.full_name,
+            'value': consultant.user.full_name,
+            'url': f"/consultant/{consultant.id}/"
+        })
+    return JsonResponse(results, safe=False)
+
+@login_required
+def consultation_list(request):
+    status = request.GET.get('status', 'all')
+    
+    if request.user.role == User.Role.CLIENT:
+        consultations = ConsultationRequest.objects.filter(client=request.user)
+    else:
+        consultations = ConsultationRequest.objects.filter(consultant=request.user)
+    
+    if status != 'all':
+        consultations = consultations.filter(status=status)
+    
+    consultations = consultations.order_by('-created_at')
+    
+    return render(request, 'consultations/list.html', {
+        'consultations': consultations,
+        'status': status
     })
 
 @login_required
-def consultant_detail(request, pk):
-    consultant = get_object_or_404(Consultant, pk=pk)
+def consultation_detail(request, pk):
+    consultation = get_object_or_404(ConsultationRequest, pk=pk)
     
-    if request.method == 'POST':
-        category = get_object_or_404(ServiceCategory, id=request.POST.get('category'))
-        question = request.POST.get('question')
-        
-        ConsultationRequest.objects.create(
-            client=request.user,
-            consultant=consultant.user,
-            #category=category,
-            question=question
-        )
-        
-        messages.success(request, 'تم إرسال استشارتك بنجاح!')
-        return redirect('consultation_list')
+    # التحقق من صلاحيات الوصول
+    if request.user not in [consultation.client, consultation.consultant]:
+        messages.error(request, 'ليس لديك صلاحية لعرض هذه الاستشارة.')
+        return redirect('dashboard')
     
-    return render(request, 'services/consultant_detail.html', {
-        'consultant': consultant
+    return render(request, 'consultations/detail.html', {
+        'consultation': consultation
     })
-
 
 @login_required
 def respond_to_consultation(request, pk):
@@ -670,7 +641,7 @@ def respond_to_consultation(request, pk):
         
         Notification.objects.create(
             user=consultation.client,
-            message=f"تم الرد على استشارتك من قبل {request.user.username}",
+            message=f"تم الرد على استشارتك من قبل {request.user.full_name}",
             link=f"/consultations/{consultation.id}/"
         )
         
@@ -679,62 +650,6 @@ def respond_to_consultation(request, pk):
     
     return render(request, 'consultations/respond.html', {
         'consultation': consultation
-    })
-
-
-@login_required
-def consultation_detail(request, pk):
-    consultation = get_object_or_404(ConsultationRequest, pk=pk)
-    
-    # Check access permissions
-    if request.user not in [consultation.client, consultation.consultant]:
-        messages.error(request, 'ليس لديك صلاحية لعرض هذه الاستشارة.')
-        return redirect('dashboard')
-    
-    return render(request, 'consultations/detail.html', {
-        'consultation': consultation
-    })
-
-
-
-@login_required
-def create_service(request):
-    categories = ServiceCategory.objects.all()
-    
-    if request.method == 'POST':
-        form = ServiceForm(request.POST, request.FILES)
-        if form.is_valid():
-            service = form.save(commit=False)
-            service.provider = request.user
-            service.save()
-            messages.success(request, 'تم إضافة الخدمة بنجاح!')
-            return redirect('service_list')
-    else:
-        form = ServiceForm()
-    
-    return render(request, 'services/create.html', {
-        'form': form,
-        'categories': categories
-    })
-
-# views.py
-@login_required
-def request_consultation(request, service_id):
-    service = get_object_or_404(Service, id=service_id)
-    if request.method == 'POST':
-        form = ConsultationRequestForm(request.POST)
-        if form.is_valid():
-            consultation = form.save(commit=False)
-            consultation.client = request.user
-            consultation.service = service
-            consultation.save()
-            return redirect('consultation_list')
-    else:
-        form = ConsultationRequestForm()
-    
-    return render(request, 'consultations/request.html', {
-        'form': form,
-        'service': service
     })
 
 @login_required
@@ -747,7 +662,7 @@ def my_bookings(request):
         bookings = bookings.filter(status=status)
     
     # الترقيم
-    paginator = Paginator(bookings, 10)  # 10 حجوزات في الصفحة
+    paginator = Paginator(bookings, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -756,6 +671,7 @@ def my_bookings(request):
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages()
     })
+
 @login_required
 def booking_detail(request, pk):
     booking = get_object_or_404(Booking, pk=pk, client=request.user)
@@ -781,37 +697,3 @@ def cancel_booking(request, pk):
         return redirect('my_bookings')
     
     return render(request, 'bookings/cancel_confirm.html', {'booking': booking})
-
-
-def handler404(request, exception):
-    return render(request, "404.html", status=404)
-
-
-
-def custom_logout(request):
-    logout(request)
-    messages.success(request, 'تم تسجيل الخروج بنجاح')
-    return redirect('home')
-
-
-from django.http import JsonResponse
-
-def autocomplete_services(request):
-    query = request.GET.get('term', '')
-    services = Service.objects.filter(
-        Q(title__icontains=query) |
-        Q(description__icontains=query) |
-        Q(provider__full_name__icontains=query),
-        is_active=True
-    ).distinct()[:10]  # الحد الأقصى للنتائج
-    
-    results = []
-    for service in services:
-        results.append({
-            'id': service.id,
-            'label': service.title,
-            'value': service.title,
-            'category': service.category.name,
-            'url': service.get_absolute_url()
-        })
-    return JsonResponse(results, safe=False)
