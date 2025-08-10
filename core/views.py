@@ -379,7 +379,8 @@ def slot_list(request):
 @login_required
 def create_slot(request):
     if request.method == 'POST':
-        form = ConsultationSlotForm(request.POST)
+        # يجب تمرير المستخدم هنا
+        form = ConsultationSlotForm(request.POST, user=request.user)  # التعديل هنا
         if form.is_valid():
             slot = form.save(commit=False)
             slot.provider = request.user  
@@ -387,7 +388,8 @@ def create_slot(request):
             messages.success(request, 'تم إضافة الموعد بنجاح!')
             return redirect('slot_list')
     else:
-        form = ConsultationSlotForm(initial={'provider': request.user})
+        # يجب تمرير المستخدم هنا أيضاً
+        form = ConsultationSlotForm(user=request.user)  # التعديل هنا
     
     return render(request, 'consultations/create_slot.html', {'form': form})
 

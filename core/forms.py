@@ -135,26 +135,30 @@ class ServiceForm(forms.ModelForm):
 
 
 class ConsultationSlotForm(forms.ModelForm):
-    is_recurring = forms.BooleanField(required=False)  
+    is_recurring = forms.BooleanField(required=False, label='موعد متكرر')
+    
     class Meta:
         model = ConsultationSlot
-        fields = ('start_time', 'end_time')
+        fields = ('start_time', 'end_time', 'is_recurring')  # إضافة الحقل هنا
         labels = {
-            'start_time': _('وقت البدء'),
-            'end_time': _('وقت الانتهاء'),
+            'start_time': 'وقت البدء',
+            'end_time': 'وقت الانتهاء',
         }
         widgets = {
-            'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)  # استخراج user من kwargs
+        # استخراج user من kwargs
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # يمكنك إضافة أي تعديلات على الحقول هنا بناءً على المستخدم
-        if self.user:
-            self.fields['start_time'].widget.attrs['min'] = timezone.now().strftime('%Y-%m-%dT%H:%M')
+        # تعيين الحد الأدنى للوقت
+        now = timezone.now()
+        min_time = now.strftime('%Y-%m-%dT%H:%M')
+        self.fields['start_time'].widget.attrs['min'] = min_time
+        self.fields['end_time'].widget.attrs['min'] = min_time
     
     def clean(self):
         cleaned_data = super().clean()
@@ -162,20 +166,27 @@ class ConsultationSlotForm(forms.ModelForm):
         end_time = cleaned_data.get('end_time')
         
         if start_time and end_time:
+            # التحقق من أن وقت الانتهاء بعد وقت البدء
             if start_time >= end_time:
-                raise forms.ValidationError(_('وقت الانتهاء يجب أن يكون بعد وقت البدء'))
-            if start_time < timezone.now():
-                raise forms.ValidationError(_('لا يمكن تحديد موعد في الماضي'))
+                raise forms.ValidationError('وقت الانتهاء يجب أن يكون بعد وقت البدء')
             
-            # تحقق إضافي إذا كان المستخدم متوفراً
+            # التحقق من أن الموعد ليس في الماضي
+            if start_time < timezone.now():
+                raise forms.ValidationError('لا يمكن تحديد موعد في الماضي')
+            
+            # التحقق من تعارض المواعيد فقط إذا كان المستخدم متاحاً
             if self.user:
+                # استثناء المواعيد التي تم حذفها
                 overlapping_slots = ConsultationSlot.objects.filter(
                     provider=self.user,
                     start_time__lt=end_time,
-                    end_time__gt=start_time
+                    end_time__gt=start_time,
+                    is_deleted=False
                 )
+                
+                # إذا كان هناك مواعيد متعارضة
                 if overlapping_slots.exists():
-                    raise forms.ValidationError(_('هذا الموعد يتعارض مع مواعيد أخرى لديك'))
+                    raise forms.ValidationError('هذا الموعد يتعارض مع مواعيد أخرى لديك')
         
         return cleaned_data
 
