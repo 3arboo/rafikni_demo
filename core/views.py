@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404 
-from django.contrib.auth.decorators import login_required 
-from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Count, Avg
@@ -122,79 +121,162 @@ def edit_profile(request):
 # ---- لوحة التحكم ---- #
 @login_required
 def provider_dashboard(request):
-    if request.user.role == User.Role.PROVIDER:
-        # استعلامات لمقدم الخدمة
-        services = Service.objects.filter(provider=request.user)
-        bookings = Booking.objects.filter(service__provider=request.user)
-        consultations = Consultation.objects.filter(slot__provider=request.user)
+    
+        active_ads = Advertisement.get_active_ads()  # Assuming you have a manager method
         
-        # الإحصائيات
-        context = {
-            'active_services': services.filter(is_active=True).count(),
-            'pending_consultations': consultations.filter(status='pending').count(),
-            'completed_bookings': bookings.filter(status='completed').count(),
-            'upcoming_appointments': consultations.filter(
+        if request.user.role == User.Role.PROVIDER:
+            # Basic counts
+            active_services = Service.objects.filter(
+                provider=request.user,
+                is_active=True
+            ).count()
+            
+            monthly_consultations = Consultation.objects.filter(
+                slot__provider=request.user,
+                created_at__month=timezone.now().month
+            ).count()
+            
+            # Rating calculation with proper null handling
+            avg_rating = Review.objects.filter(
+                service__provider=request.user
+            ).aggregate(
+                avg_rating=Coalesce(Avg('rating'), 0.0)
+            )['avg_rating']
+            
+            # Booking calculations with division protection
+            bookings = Booking.objects.filter(service__provider=request.user)
+            total_bookings = bookings.count() or 1  # Prevent division by zero
+            confirmed_bookings = bookings.filter(status='confirmed').count()
+            completed_bookings = bookings.filter(status='completed').count()
+            
+            booking_rate = round((confirmed_bookings / total_bookings * 100), 2)
+            completion_rate = round((completed_bookings / total_bookings * 100), 2)
+            satisfaction_rate = round(float(avg_rating) * 20, 1)
+            
+            # Simplify upcoming appointments query
+            upcoming_appointments = Consultation.objects.filter(
+                slot__provider=request.user,
                 slot__start_time__gte=timezone.now(),
                 status='confirmed'
-            ).order_by('slot__start_time')[:5],
-            'recent_reviews': Review.objects.filter(
-                service__provider=request.user
-            ).order_by('-created_at')[:3],
-            'total_earnings': sum(booking.service.price for booking in bookings.filter(status='completed')),
-            'active_ads': Advertisement.get_active_ads()
-        }
-        return render(request, 'dashboard/provider.html', context)
-    else:
-        return client_dashboard(request)
-
-def calculate_percentage(numerator, denominator):
-    """Safe percentage calculation with division by zero protection"""
-    if denominator == 0:
-        return 0.0
-    return round((numerator / denominator) * 100, 2)
+            ).select_related('slot', 'client')[:5]
+            
+            return render(request, 'dashboard/provider.html', {
+                'active_services': active_services,
+                'monthly_consultations': monthly_consultations,
+                'avg_rating': round(float(avg_rating), 1),
+                'new_consultation_requests': ConsultationRequest.objects.filter(
+                    consultant=request.user,
+                    status='pending'
+                )[:5],
+                'recent_reviews': Review.objects.filter(
+                    service__provider=request.user
+                ).order_by('-created_at')[:3],
+                'upcoming_appointments': upcoming_appointments,
+                'booking_rate': booking_rate,
+                'satisfaction_rate': satisfaction_rate,
+                'completion_rate': completion_rate,
+                'active_ads': active_ads
+            })
+        
+       
+        else:
+            # Client dashboard - improved version
+            consultations = Consultation.objects.filter(client=request.user).select_related('slot')
+            bookings = Booking.objects.filter(client=request.user).select_related('slot', 'service')
+            documents = Document.objects.filter(user=request.user)
+            
+            # Active counts with fallback
+            active_consultations = consultations.filter(
+                status__in=['pending', 'confirmed']
+            ).count() or 0
+            
+            active_bookings = bookings.filter(
+                status__in=['pending', 'confirmed'],
+                slot__start_time__gte=timezone.now()
+            ).count() or 0
+            
+            # Upcoming appointments with null checks
+            upcoming_consultations = consultations.filter(
+                slot__start_time__gte=timezone.now(),
+                status='confirmed'
+            ).order_by('slot__start_time')[:3] or []
+            
+            upcoming_bookings = bookings.filter(
+                slot__start_time__gte=timezone.now(),
+                status='confirmed'
+            ).order_by('slot__start_time')[:3] or []
+            
+            # Important documents with safe date handling
+            important_documents = []
+            docs = documents.filter(
+                is_important=True,
+                reminder_date__isnull=False
+            ).order_by('reminder_date')[:3]
+            
+            for doc in docs:
+                try:
+                    doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
+                    doc.is_urgent = doc.reminder_days <= 3
+                    important_documents.append(doc)
+                except Exception:
+                    continue
+            
+            context = {
+                'active_consultations': active_consultations,
+                'active_bookings': active_bookings,
+                'documents_count': documents.count(),
+                'unread_notifications': Notification.objects.filter(
+                    user=request.user,
+                    is_read=False
+                ).count(),
+                'upcoming_consultations': upcoming_consultations,
+                'upcoming_bookings': upcoming_bookings,
+                'important_documents': important_documents,
+                'active_ads': active_ads
+            }
+            return render(request, 'dashboard/client.html', context)
+     
 
 @login_required
 def client_dashboard(request):
-    # استعلامات البيانات الأساسية
-    consultations = Consultation.objects.filter(
-        client=request.user
-    ).select_related('slot', 'slot__provider', 'slot__provider__profile')
-    
-    bookings = Booking.objects.filter(
-        client=request.user
-    ).select_related('slot', 'service')
-    
-    documents = Document.objects.filter(user=request.user)
-    
-    # الإحصائيات
-    context = {
-        'active_consultations': consultations.filter(
-            status__in=['pending', 'accepted']
-        ).count(),
-        'active_bookings': bookings.filter(
-            status__in=['pending', 'confirmed'],
-            slot__start_time__gte=timezone.now()
-        ).count(),
-        'documents_count': documents.count(),
-        'unread_notifications': Notification.objects.filter(
-            user=request.user,
-            is_read=False
-        ).count(),
-        'upcoming_consultations': consultations.filter(
-            slot__start_time__gte=timezone.now(),
-            status='accepted'
-        ).order_by('slot__start_time')[:3],
-        'upcoming_bookings': bookings.filter(
-            slot__start_time__gte=timezone.now(),
-            status='confirmed'
-        ).order_by('slot__start_time')[:3],
-        'important_documents': get_important_documents(documents),
-        'recent_notifications': Notification.objects.filter(
-            user=request.user
-        ).order_by('-created_at')[:5],
-        'active_ads': get_active_ads()
-    }
-    return render(request, 'dashboard/client.html', context)
+
+        # استعلامات البيانات الأساسية
+        consultations = Consultation.objects.filter(
+            client=request.user
+        ).select_related('slot')
+        
+        bookings = Booking.objects.filter(
+            client=request.user
+        ).select_related('slot', 'service')
+        
+        documents = Document.objects.filter(user=request.user)
+        
+        # الإحصائيات
+        context = {
+            'active_consultations': consultations.filter(
+                status__in=['pending', 'confirmed']
+            ).count(),
+            'active_bookings': bookings.filter(
+                status__in=['pending', 'confirmed'],
+                slot__start_time__gte=timezone.now()
+            ).count(),
+            'documents_count': documents.count(),
+            'unread_notifications': Notification.objects.filter(
+                user=request.user,
+                is_read=False
+            ).count(),
+            'upcoming_consultations': consultations.filter(
+                slot__start_time__gte=timezone.now(),
+                status='confirmed'
+            ).order_by('slot__start_time')[:3],
+            'upcoming_bookings': bookings.filter(
+                slot__start_time__gte=timezone.now(),
+                status='confirmed'
+            ).order_by('slot__start_time')[:3],
+            'important_documents': get_important_documents(documents),
+            'active_ads': get_active_ads()
+        }
+        return render(request, 'dashboard/client.html', context)
         
 
 
@@ -205,7 +287,6 @@ def dashboard(request):
     else:
       
         return client_dashboard(request)
-    
 def get_important_documents(documents):
     """معالجة آمنة للوثائق المهمة"""
     important_docs = []
@@ -298,21 +379,15 @@ def slot_list(request):
 @login_required
 def create_slot(request):
     if request.method == 'POST':
-        form = ConsultationSlotForm(request.POST, user=request.user)
+        form = ConsultationSlotForm(request.POST)
         if form.is_valid():
             slot = form.save(commit=False)
-            slot.provider = request.user
+            slot.provider = request.user  
             slot.save()
-            
-            # هنا يمكنك معالجة المواعيد المتكررة إذا كان is_recurring True
-            if form.cleaned_data.get('is_recurring'):
-                # قم بتنفيذ منطق إنشاء مواعيد متكررة هنا
-                pass
-            
             messages.success(request, 'تم إضافة الموعد بنجاح!')
             return redirect('slot_list')
     else:
-        form = ConsultationSlotForm(user=request.user)
+        form = ConsultationSlotForm(initial={'provider': request.user})
     
     return render(request, 'consultations/create_slot.html', {'form': form})
 
@@ -357,71 +432,24 @@ def browse_consultants(request):
     })
 
 
-@require_POST
-@login_required
-def book_consultation(request, slot_id):
-    try:
-        # الحصول على الموعد المطلوب
-        slot = get_object_or_404(ConsultationSlot, id=slot_id, is_booked=False)
-        
-        # التحقق من أن المستخدم ليس هو مقدم الخدمة
-        if slot.provider == request.user:
-            messages.error(request, 'لا يمكنك حجز موعد مع نفسك')
-            return redirect('consultant_detail', pk=slot.provider.consultant.pk)
-        
-        # التحقق من أن الموعد لم ينته بعد
-        if slot.start_time < timezone.now():
-            messages.error(request, 'هذا الموعد قد انتهى')
-            return redirect('consultant_detail', pk=slot.provider.consultant.pk)
-        
-        # حجز الموعد
-        slot.is_booked = True
-        slot.save()
-        
-        # إنشاء استشارة جديدة
-        consultation = Consultation.objects.create(
-            client=request.user,
-            consultant=slot.provider.consultant,
-            slot=slot,
-            status='pending',
-            question="تم الحجز عبر الموقع"  # يمكن تغيير هذا النص
-        )
-        
-        messages.success(request, 'تم حجز الموعد بنجاح! سيتواصل معك المستشار قريباً.')
-        return redirect('consultation_detail', pk=consultation.id)
-    
-    except Exception as e:
-        messages.error(request, f'حدث خطأ أثناء الحجز: {str(e)}')
-        return redirect('home')
-
 
 def consultant_detail(request, pk):
     consultant = get_object_or_404(Consultant, pk=pk, available=True)
     services = Service.objects.filter(provider=consultant.user, is_active=True)
     reviews = Review.objects.filter(service__provider=consultant.user).order_by('-created_at')
-    
-    # تحديد التاريخ المختار
-    selected_date = request.GET.get('date', timezone.now().date().isoformat())
-    try:
-        selected_date = timezone.datetime.strptime(selected_date, '%Y-%m-%d').date()
-    except ValueError:
-        selected_date = timezone.now().date()
-    
-    # الحصول على المواعيد المتاحة للتاريخ المحدد
     available_slots = ConsultationSlot.objects.filter(
         provider=consultant.user,
         is_booked=False,
-        start_time__date=selected_date,
         start_time__gte=timezone.now()
     ).order_by('start_time')
     
-    # حساب متوسط التقييم
+    # Calculate average rating
     avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
     
-    # حساب عدد التقييمات
+    # Calculate reviews count
     reviews_count = reviews.count()
     
-    # معالجة تقييم المستخدم
+    # Handle user review
     user_review = None
     if request.user.is_authenticated:
         user_review = reviews.filter(reviewer=request.user).first()
@@ -442,14 +470,22 @@ def consultant_detail(request, pk):
     else:
         form = ReviewForm(instance=user_review)
     
-    # توليد تواريخ الأسبوع
-    week_dates = [selected_date + timedelta(days=i) for i in range(-3, 4)]
+    # Generate week dates
+    selected_date = request.GET.get('date', timezone.now().date().isoformat())
+    try:
+        selected_date = timezone.datetime.strptime(selected_date, '%Y-%m-%d').date()
+    except ValueError:
+        selected_date = timezone.now().date()
     
-    # إضافة سمات خاصة بالمستشار للسياق
+    # Calculate the start of the week (assuming week starts on Sunday)
+    start_of_week = selected_date - timedelta(days=selected_date.weekday() + 1)
+    week_dates = [start_of_week + timedelta(days=i) for i in range(7)]
+    
+    # Add consultant-specific attributes to context
     consultant.average_rating = round(avg_rating, 1)
     consultant.reviews_count = reviews_count
     
-    # الإعلانات النشطة
+    # Active ads
     active_ads = Advertisement.objects.filter(
         is_active=True,
         start_date__lte=timezone.now().date(),
@@ -674,20 +710,12 @@ def consultation_list(request):
 
 @login_required
 def consultation_detail(request, pk):
-    consultation = get_object_or_404(Consultation, pk=pk)
+    consultation = get_object_or_404(ConsultationRequest, pk=pk)
     
-    # التحقق من أن المستخدم له صلاحية رؤية الاستشارة
-    if request.user != consultation.client and request.user != consultation.consultant.user:
-        messages.error(request, 'ليس لديك صلاحية لعرض هذه الاستشارة')
-        return redirect('home')
-    
-    # معالجة رد المستشار
-    if request.method == 'POST' and 'response' in request.POST and request.user == consultation.consultant.user:
-        consultation.response = request.POST.get('response')
-        consultation.status = 'completed'
-        consultation.save()
-        messages.success(request, 'تم إرسال الرد بنجاح!')
-        return redirect('consultation_detail', pk=pk)
+    # التحقق من صلاحيات الوصول
+    if request.user not in [consultation.client, consultation.consultant]:
+        messages.error(request, 'ليس لديك صلاحية لعرض هذه الاستشارة.')
+        return redirect('dashboard')
     
     return render(request, 'consultations/detail.html', {
         'consultation': consultation
@@ -804,30 +832,30 @@ def edit_consultant(request):
     consultant = get_object_or_404(Consultant, user=request.user)
     
     if request.method == 'POST':
-        form = ConsultantForm(request.POST, request.FILES, instance=consultant, request=request)
+        form = ConsultantForm(request.POST, instance=consultant)
+        
         if form.is_valid():
-            form.save()
+            # حفظ بيانات الموديل الأساسية
+            consultant = form.save()
+            
+            # معالجة الحقول الإضافية (يمكنك تخزينها كما تريد)
+            title = form.cleaned_data['title']
+            session_duration = form.cleaned_data['session_duration']
+            session_price = form.cleaned_data['session_price']
+            working_hours = form.cleaned_data['working_hours']
+            
+            # مثال: حفظ في جلسة المستخدم (يمكنك التعديل حسب حاجتك)
+            request.session['consultant_extra_data'] = {
+                'title': title,
+                'session_duration': session_duration,
+                'session_price': session_price,
+                'working_hours': working_hours
+            }
+            
             return redirect('provider_profile')
     else:
-        # تحميل بيانات أوقات العمل من الجلسة إذا كانت موجودة
-        initial_data = request.session.get('consultant_working_hours', {})
-        form = ConsultantForm(instance=consultant, initial=initial_data, request=request)
+        # تحميل القيم الأولية من الجلسة إن وجدت
+        initial_data = request.session.get('consultant_extra_data', {})
+        form = ConsultantForm(instance=consultant, initial=initial_data)
     
     return render(request, 'consultants/edit.html', {'form': form})
-
-@require_POST
-@login_required
-def cancel_consultation(request, pk):
-    consultation = get_object_or_404(Consultation, pk=pk, client=request.user, status='pending')
-    
-    # تحرير الموعد
-    if consultation.slot:
-        consultation.slot.is_booked = False
-        consultation.slot.save()
-    
-    # إلغاء الاستشارة
-    consultation.status = 'cancelled'
-    consultation.save()
-    
-    messages.success(request, 'تم إلغاء الاستشارة بنجاح')
-    return redirect('client_dashboard')

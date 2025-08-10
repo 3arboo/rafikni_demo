@@ -152,38 +152,32 @@ class ConsultationSlot(models.Model):
         return f"{self.provider.username} - {self.start_time}"
 
 class Consultation(models.Model):
-    STATUS_CHOICES = (
-        ('pending', 'قيد الانتظار'),
-        ('accepted', 'مقبول'),
-        ('rejected', 'مرفوض'),
-        ('completed', 'مكتمل'),
-    )
+    class Status(models.TextChoices):
+        PENDING = 'pending', _('قيد الانتظار')
+        CONFIRMED = 'confirmed', _('تم التأكيد')
+        COMPLETED = 'completed', _('منتهية')
+        CANCELLED = 'cancelled', _('ملغاة')
     
+    slot = models.OneToOneField(ConsultationSlot, on_delete=models.PROTECT)
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_consultations')
-    slot = models.ForeignKey(ConsultationSlot, on_delete=models.SET_NULL, null=True, blank=True)
-    question = models.TextField()
-    response = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    notes = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    @property
-    def consultant(self):
-        return self.slot.provider if self.slot else None
-
-    def __str__(self):
-        if self.slot:
-            return f"استشارة #{self.id} - {self.client.username} مع {self.slot.provider.username}"
-        return f"استشارة #{self.id} - {self.client.username}"
-
+    
     def save(self, *args, **kwargs):
-        if self.status == 'accepted' and self.slot:
+        if self.status == self.Status.CONFIRMED:
             self.slot.is_booked = True
             self.slot.save()
         super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"Consultation #{self.id} - {self.client.username} with {self.slot.provider.username}"
 
 class Document(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='documents')
