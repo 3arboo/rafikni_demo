@@ -1,77 +1,216 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}تعديل ملف المستشار - RaFiKNi{% endblock %}
+{% block title %}تعديل الملف الشخصي{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<style>
+    /* إضافة أنماط لواجهة أوقات العمل */
+    .working-hours-card {
+        margin-top: 30px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .working-hours-header {
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        color: white;
+        padding: 15px 20px;
+        font-weight: 600;
+    }
+    .working-hours-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .working-hours-table th {
+        background-color: #f8f9fa;
+        padding: 12px 15px;
+        text-align: right;
+        border-bottom: 1px solid #e0e0e0;
+        font-weight: 600;
+    }
+    .working-hours-table td {
+        padding: 10px 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .working-hours-input {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 8px 12px;
+        width: 100%;
+        transition: all 0.3s;
+    }
+    .working-hours-input:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+    }
+    .day-off {
+        color: #6c757d;
+        font-style: italic;
+    }
+    .toggle-day-off {
+        cursor: pointer;
+        color: #4361ee;
+        font-size: 14px;
+    }
+    .toggle-day-off:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="container py-5 profile-edit-container">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card shadow-lg">
-                <div class="card-header bg-primary text-white py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">
-                            <i class="fas fa-edit me-2"></i> تعديل ملف المستشار
-                        </h4>
-                        <a href="{% url 'provider_profile' %}" class="btn btn-sm btn-light">
-                            <i class="fas fa-user me-1"></i> عرض الملف
-                        </a>
-                    </div>
+            <div class="card profile-edit-card">
+                <div class="card-header">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-user-edit me-2"></i> تعديل الملف الشخصي
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <form method="post" class="needs-validation" novalidate>
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                         {% csrf_token %}
-                        <div class="mb-4">
-                            <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">العنوان المهني</label>
-                            {{ form.title }}
-                            <div class="invalid-feedback">يرجى إدخال عنوان مهني</div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="{{ form.bio.id_for_label }}" class="form-label fw-bold">السيرة الذاتية</label>
-                            {{ form.bio }}
-                            <div class="form-text">وصف قصير عن خبراتك ومهاراتك</div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="{{ form.session_duration.id_for_label }}" class="form-label fw-bold">مدة الجلسة (دقائق)</label>
-                            {{ form.session_duration }}
-                            <div class="invalid-feedback">يرجى إدخال مدة الجلسة</div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="{{ form.session_price.id_for_label }}" class="form-label fw-bold">سعر الجلسة (ر.س)</label>
-                            {{ form.session_price }}
-                            <div class="invalid-feedback">يرجى إدخال سعر الجلسة</div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="{{ form.categories.id_for_label }}" class="form-label fw-bold">التخصصات</label>
-                            {{ form.categories }}
-                            <div class="invalid-feedback">يرجى اختيار تخصص واحد على الأقل</div>
-                            <div class="form-text">اختر واحد أو أكثر من التخصصات</div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="{{ form.working_hours.id_for_label }}" class="form-label fw-bold">ساعات العمل (JSON)</label>
-                            {{ form.working_hours }}
-                            <div class="invalid-feedback">يرجى إدخال ساعات عمل صحيحة بتنسيق JSON</div>
-                            <div class="form-text">
-                                أدخل ساعات العمل بتنسيق JSON, مثال:
-                                <pre>
-{
-  "Sunday": {"start": "09:00", "end": "17:00", "off": false},
-  "Monday": {"start": "09:00", "end": "17:00", "off": false},
-  "Tuesday": {"start": "09:00", "end": "17:00", "off": false},
-  "Wednesday": {"start": "09:00", "end": "17:00", "off": false},
-  "Thursday": {"start": "09:00", "end": "17:00", "off": false},
-  "Friday": {"start": "09:00", "end": "17:00", "off": true},
-  "Saturday": {"start": "09:00", "end": "17:00", "off": true}
-}
-                                </pre>
+                        
+                        <!-- صورة الملف الشخصي -->
+                        <div class="form-group text-center">
+                            {% if form.instance.profile_image %}
+                                <img src="{{ form.instance.profile_image.url }}" class="image-preview" id="imagePreview" alt="صورة الملف الشخصي">
+                            {% else %}
+                                <img src="{% static 'images/default-avatar.png' %}" class="image-preview" id="imagePreview" alt="صورة افتراضية">
+                            {% endif %}
+                            <div class="file-input-wrapper">
+                                <button type="button" class="custom-file-label">
+                                    <i class="fas fa-camera me-2"></i> تغيير الصورة
+                                </button>
+                                {{ form.profile_image }}
                             </div>
                         </div>
-                        <div class="d-flex justify-content-between mt-5">
-                            <a href="{% url 'provider_profile' %}" class="btn btn-outline-secondary btn-lg px-4">
-                                <i class="fas fa-arrow-left me-1"></i> إلغاء
+                        
+                        <div class="form-row">
+                            <!-- الحقول الأساسية -->
+                            {% for field in form %}
+                                {% if field.name != 'profile_image' and field.name not in 'saturday sunday monday tuesday wednesday thursday friday' %}
+                                <div class="form-col">
+                                    <div class="form-group">
+                                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.help_text %}
+                                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                                        {% endif %}
+                                        {% for error in field.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- قسم أوقات العمل -->
+                        <div class="card working-hours-card">
+                            <div class="working-hours-header">
+                                <i class="fas fa-clock me-2"></i> أوقات العمل
+                            </div>
+                            <div class="card-body">
+                                <table class="working-hours-table">
+                                    <thead>
+                                        <tr>
+                                            <th>اليوم</th>
+                                            <th>أوقات العمل</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>السبت</td>
+                                            <td>
+                                                <div class="working-hours-field">
+                                                    {{ form.saturday }}
+                                                </div>
+                                                <div class="toggle-day-off mt-2" data-day="saturday">
+                                                    <i class="fas fa-times-circle me-1"></i> تحديد كيوم إجازة
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>الأحد</td>
+                                            <td>
+                                                <div class="working-hours-field">
+                                                    {{ form.sunday }}
+                                                </div>
+                                                <div class="toggle-day-off mt-2" data-day="sunday">
+                                                    <i class="fas fa-times-circle me-1"></i> تحديد كيوم إجازة
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>الاثنين</td>
+                                            <td>
+                                                <div class="working-hours-field">
+                                                    {{ form.monday }}
+                                                </div>
+                                                <div class="toggle-day-off mt-2" data-day="monday">
+                                                    <i class="fas fa-times-circle me-1"></i> تحديد كيوم إجازة
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>الثلاثاء</td>
+                                            <td>
+                                                <div class="working-hours-field">
+                                                    {{ form.tuesday }}
+                                                </div>
+                                                <div class="toggle-day-off mt-2" data-day="tuesday">
+                                                    <i class="fas fa-times-circle me-1"></i> تحديد كيوم إجازة
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>الأربعاء</td>
+                                            <td>
+                                                <div class="working-hours-field">
+                                                    {{ form.wednesday }}
+                                                </div>
+                                                <div class="toggle-day-off mt-2" data-day="wednesday">
+                                                    <i class="fas fa-times-circle me-1"></i> تحديد كيوم إجازة
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>الخميس</td>
+                                            <td>
+                                                <div class="working-hours-field">
+                                                    {{ form.thursday }}
+                                                </div>
+                                                <div class="toggle-day-off mt-2" data-day="thursday">
+                                                    <i class="fas fa-times-circle me-1"></i> تحديد كيوم إجازة
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>الجمعة</td>
+                                            <td>
+                                                <div class="working-hours-field">
+                                                    {{ form.friday }}
+                                                </div>
+                                                <div class="toggle-day-off mt-2" data-day="friday">
+                                                    <i class="fas fa-times-circle me-1"></i> تحديد كيوم إجازة
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="mt-3 text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    اكتب أوقات العمل لكل يوم بصيغة "09:00 - 17:00" أو اتركه فارغاً لليوم الإجازة
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'profile' %}" class="btn btn-cancel">
+                                <i class="fas fa-times me-2"></i> إلغاء
                             </a>
-                            <button type="submit" class="btn btn-primary btn-lg px-5">
-                                <i class="fas fa-save me-1"></i> حفظ التغييرات
+                            <button type="submit" class="btn btn-save text-white">
+                                <i class="fas fa-save me-2"></i> حفظ التغييرات
                             </button>
                         </div>
                     </form>
@@ -80,22 +219,63 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
-(function () {
-    'use strict';
-    const forms = document.querySelectorAll('.needs-validation');
-    Array.from(forms).forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
+    // عرض معاينة الصورة عند اختيارها
+    document.getElementById('id_profile_image').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').src = e.target.result;
             }
-            form.classList.add('was-validated');
-        }, false);
+            reader.readAsDataURL(file);
+        }
     });
-})();
+    
+    // التحقق من صحة النموذج
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+    
+    // وظائف لواجهة أوقات العمل
+    document.querySelectorAll('.toggle-day-off').forEach(button => {
+        button.addEventListener('click', function() {
+            const day = this.dataset.day;
+            const input = document.getElementById(`id_${day}`);
+            
+            if (input.value === '') {
+                input.value = 'إجازة';
+                this.innerHTML = '<i class="fas fa-check-circle me-1"></i> إلغاء الإجازة';
+            } else {
+                input.value = '';
+                this.innerHTML = '<i class="fas fa-times-circle me-1"></i> تحديد كيوم إجازة';
+            }
+        });
+    });
+    
+    // تحميل حالة أيام الإجازة عند فتح الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.working-hours-input').forEach(input => {
+            const day = input.id.replace('id_', '');
+            const button = document.querySelector(`.toggle-day-off[data-day="${day}"]`);
+            
+            if (input.value === 'إجازة') {
+                button.innerHTML = '<i class="fas fa-check-circle me-1"></i> إلغاء الإجازة';
+            }
+        });
+    });
 </script>
 {% endblock %}

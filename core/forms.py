@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import  authenticate
-
+import json
 class UserRegistrationForm(UserCreationForm):
     full_name = forms.CharField(
         label='الاسم الكامل',
@@ -263,10 +263,34 @@ class ConsultantForm(forms.ModelForm):
         min_value=0,
         widget=forms.NumberInput(attrs={'class': 'form-control', 'step': 0.01})
     )
-    working_hours = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 10})
-    )
-
+    saturday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input', 
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    sunday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input', 
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    monday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input', 
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    tuesday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input', 
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    wednesday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input', 
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    thursday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input', 
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    friday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input', 
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
     class Meta:
         model = Consultant
         fields = ['bio', 'categories']  # الحقول الموجودة فعلياً في الموديل
@@ -274,3 +298,31 @@ class ConsultantForm(forms.ModelForm):
             'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'categories': forms.SelectMultiple(attrs={'class': 'form-select'}),
         }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # تحميل بيانات أوقات العمل إذا كانت موجودة
+        if self.instance and self.instance.working_hours:
+            try:
+                working_hours = json.loads(self.instance.working_hours)
+                for day in ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday']:
+                    self.fields[day].initial = working_hours.get(day, '')
+            except json.JSONDecodeError:
+                pass
+    
+    def save(self, commit=True):
+        consultant = super().save(commit=False)
+        # تجميع أوقات العمل في JSON
+        working_hours = {
+            'saturday': self.cleaned_data['saturday'],
+            'sunday': self.cleaned_data['sunday'],
+            'monday': self.cleaned_data['monday'],
+            'tuesday': self.cleaned_data['tuesday'],
+            'wednesday': self.cleaned_data['wednesday'],
+            'thursday': self.cleaned_data['thursday'],
+            'friday': self.cleaned_data['friday'],
+        }
+        consultant.working_hours = json.dumps(working_hours)
+        if commit:
+            consultant.save()
+            self.save_m2m()
+        return consultant
