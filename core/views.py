@@ -696,8 +696,4 @@ def cancel_booking(request, pk):
         messages.success(request, 'تم إلغاء الحجز بنجاح')
         return redirect('my_bookings')
     
-<<<<<<< HEAD
     return render(request, 'bookings/cancel_confirm.html', {'booking': booking})
-=======
-    return render(request, 'bookings/cancel_confirm.html', {'booking': booking})
->>>>>>> 88d4550049435d0e090fd9d9650dffaca62e313b
