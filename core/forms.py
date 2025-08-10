@@ -248,16 +248,20 @@ class ConsultationRequestForm(forms.ModelForm):
 
 
 class BookSlotForm(forms.ModelForm):
+    notes = forms.CharField(required=False, widget=forms.Textarea)
+    
     class Meta:
         model = Consultation
-        fields = ['notes']
-        widgets = {
-            'notes': forms.Textarea(attrs={
-                'class': 'form-control',
-                'placeholder': 'أي ملاحظات أو تفاصيل إضافية تريد مشاركتها مع المستشار'
-            })
-        }
-
+        fields = ['slot']  # الحقول الموجودة في النموذج فقط
+        
+    def save(self, commit=True):
+        consultation = super().save(commit=False)
+        # يمكنك معالجة البيانات الإضافية هنا
+        notes = self.cleaned_data.get('notes')
+        # تخزينها في مكان آخر (مثل الجلسة أو نموذج آخر)
+        if commit:
+            consultation.save()
+        return consultation
 # forms.py
 class ConsultantForm(forms.ModelForm):
     # الحقول الإضافية لأيام الأسبوع
