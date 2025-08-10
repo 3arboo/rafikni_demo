@@ -561,7 +561,7 @@ def home(request):
     
     featured_consultants = Consultant.objects.filter(
         available=True,
-        is_featured=True
+       # is_featured=True
     ).order_by('?')[:4]  # 4 مستشارين مميزين
     
     return render(request, 'home.html', {
