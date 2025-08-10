@@ -396,7 +396,7 @@ def browse_consultants(request):
     category_id = request.GET.get('category')
     query = request.GET.get('q')
     
-    consultants = Consultant.objects.filter(available=True)
+    consultants = Consultant.objects.filter(available=True).select_related('user__profile')
     
     if category_id:
         consultants = consultants.filter(categories__id=category_id)
@@ -417,12 +417,11 @@ def browse_consultants(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # الحصول على الإعلانات النشطة
     active_ads = Advertisement.objects.filter(
         is_active=True,
         start_date__lte=timezone.now().date(),
         end_date__gte=timezone.now().date()
-    ).order_by('?')[:2]  # 2 إعلانات عشوائية
+    ).order_by('?')[:2]
     
     return render(request, 'consultants/list.html', {
         'consultants': page_obj,
@@ -431,7 +430,6 @@ def browse_consultants(request):
         'search_query': query or '',
         'active_ads': active_ads
     })
-
 
 
 
