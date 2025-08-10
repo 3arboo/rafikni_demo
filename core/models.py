@@ -160,7 +160,6 @@ class Consultation(models.Model):
     )
     
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_consultations')
-    consultant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='consultant_consultations')  # التعديل هنا
     slot = models.ForeignKey(ConsultationSlot, on_delete=models.SET_NULL, null=True, blank=True)
     question = models.TextField()
     response = models.TextField(blank=True)
