@@ -26,17 +26,17 @@ def register(request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.username = user.email
+            user.username = user.email  # حتى لو ما تستخدم username
             user.save()
 
-            Profile.objects.get_or_create(user=user)
+            Profile.objects.get_or_create(user=user)  # إنشاء البروفايل
 
             authenticated_user = authenticate(
                 request,
                 username=user.email,
                 password=form.cleaned_data['password1']
-            )
-            
+                )
+
             if authenticated_user is not None:
                 login(request, authenticated_user)
                 messages.success(request, 'تم تسجيل الحساب بنجاح!')
@@ -50,24 +50,29 @@ def register(request):
                     messages.error(request, f"{field}: {error}")
     else:
         form = UserRegistrationForm()
-    
+
     return render(request, 'auth/register.html', {'form': form})
 
 def user_login(request):
     if request.method == 'POST':
-        form = UserLoginForm( data=request.POST)
+        # التعديل هنا: إزالة وسيط request
+        form = UserLoginForm(request.POST)  # كان: form = UserLoginForm(request, data=request.POST)
+
         if form.is_valid():
-            user = form.get_user()
-            
-            if not form.cleaned_data.get('remember_me', False):
-                request.session.set_expiry(0)
-            
+            user = form.cleaned_data['user']
+
+            # تذكرني functionality
+            if not form.cleaned_data['remember_me']:
+                request.session.set_expiry(0)  # تنتهي الجلسة عند إغلاق المتصفح
+
             login(request, user)
-            
+
+            # التحقق من تفعيل الحساب
             if not user.is_active:
                 messages.error(request, 'حسابك غير مفعل. يرجى التواصل مع الدعم الفني.')
                 return redirect('login')
-            
+
+            # التوجيه حسب الدور
             if user.role == User.Role.PROVIDER:
                 messages.success(request, f'مرحباً بعودتك، {user.full_name}!')
                 return redirect('provider_dashboard')
@@ -75,11 +80,13 @@ def user_login(request):
                 messages.success(request, f'مرحباً بعودتك، {user.full_name}!')
                 return redirect('client_dashboard')
         else:
-            for error in form.errors.values():
-                messages.error(request, error)
+            # عرض أخطاء محددة
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         form = UserLoginForm()
-    
+
     return render(request, 'auth/login.html', {'form': form})
 
 @login_required
