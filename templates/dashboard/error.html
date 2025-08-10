@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="alert alert-danger">
+    <h4 class="alert-heading">خطأ في النظام</h4>
+    <p>{{ error|default:"حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقًا." }}</p>
+    <hr>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
+      العودة إلى لوحة التحكم
+    </a>
+  </div>
+</div>
+{% endblock %}

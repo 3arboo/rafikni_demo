@@ -19,7 +19,7 @@ from django.utils.text import slugify
 import uuid
 from django.contrib.auth import login, logout, authenticate
 from django.http import JsonResponse
-
+from django.db.models.functions import Coalesce
 # ---- المصادقة والملف الشخصي ---- #
 def register(request):
     if request.method == 'POST':
@@ -112,135 +112,124 @@ def edit_profile(request):
 # ---- لوحة التحكم ---- #
 @login_required
 def dashboard(request):
-    # الحصول على الإعلانات النشطة
-    active_ads = Advertisement.objects.filter(
-        is_active=True,
-        start_date__lte=timezone.now().date(),
-        end_date__gte=timezone.now().date()
-    ).order_by('?')[:3]  # 3 إعلانات عشوائية
-
-    if request.user.role == User.Role.PROVIDER:
-        # لوحة مقدم الخدمة
-        services = Service.objects.filter(provider=request.user)
-        consultations = Consultation.objects.filter(slot__provider=request.user)
-        bookings = Booking.objects.filter(service__provider=request.user)
-        reviews = Review.objects.filter(service__provider=request.user)
+    try:
+        active_ads = Advertisement.get_active_ads()  # Assuming you have a manager method
         
-        # حساب الإحصائيات
-        active_services = services.filter(is_active=True).count()
-        monthly_consultations = consultations.filter(
-            created_at__month=timezone.now().month
-        ).count()
-        monthly_bookings = bookings.filter(
-            created_at__month=timezone.now().month,
-            status__in=['confirmed', 'completed']
-        ).count()
-        
-        avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
-        
-        # الطلبات الجديدة
-        new_consultation_requests = ConsultationRequest.objects.filter(
-            consultant=request.user,
-            status='pending'
-        )[:5]
-        
-        new_bookings = bookings.filter(
-            status='pending'
-        )[:5]
-        
-        # المراجعات الحديثة
-        recent_reviews = reviews.order_by('-created_at')[:3]
-        
-        # المواعيد القادمة
-        upcoming_appointments = consultations.filter(
-            slot__start_time__gte=timezone.now(),
-            status='confirmed'
-        ).union(
-            bookings.filter(
+        if request.user.role == User.Role.PROVIDER:
+            # Basic counts
+            active_services = Service.objects.filter(
+                provider=request.user,
+                is_active=True
+            ).count()
+            
+            monthly_consultations = Consultation.objects.filter(
+                slot__provider=request.user,
+                created_at__month=timezone.now().month
+            ).count()
+            
+            # Rating calculation with proper null handling
+            avg_rating = Review.objects.filter(
+                service__provider=request.user
+            ).aggregate(
+                avg_rating=Coalesce(Avg('rating'), 0.0)
+            )['avg_rating']
+            
+            # Booking calculations with division protection
+            bookings = Booking.objects.filter(service__provider=request.user)
+            total_bookings = bookings.count() or 1  # Prevent division by zero
+            confirmed_bookings = bookings.filter(status='confirmed').count()
+            completed_bookings = bookings.filter(status='completed').count()
+            
+            booking_rate = round((confirmed_bookings / total_bookings * 100), 2)
+            completion_rate = round((completed_bookings / total_bookings * 100), 2)
+            satisfaction_rate = round(float(avg_rating) * 20, 1)
+            
+            # Simplify upcoming appointments query
+            upcoming_appointments = Consultation.objects.filter(
+                slot__provider=request.user,
                 slot__start_time__gte=timezone.now(),
                 status='confirmed'
-            )
-        ).order_by('slot__start_time')[:5]
+            ).select_related('slot', 'client')[:5]
+            
+            return render(request, 'dashboard/provider.html', {
+                'active_services': active_services,
+                'monthly_consultations': monthly_consultations,
+                'avg_rating': round(float(avg_rating), 1),
+                'new_consultation_requests': ConsultationRequest.objects.filter(
+                    consultant=request.user,
+                    status='pending'
+                )[:5],
+                'recent_reviews': Review.objects.filter(
+                    service__provider=request.user
+                ).order_by('-created_at')[:3],
+                'upcoming_appointments': upcoming_appointments,
+                'booking_rate': booking_rate,
+                'satisfaction_rate': satisfaction_rate,
+                'completion_rate': completion_rate,
+                'active_ads': active_ads
+            })
         
-        # حساب معدلات الأداء
-        total_bookings = bookings.count()
-        confirmed_bookings = bookings.filter(status='confirmed').count()
-        completed_bookings = bookings.filter(status='completed').count()
-        
-        booking_rate = round((confirmed_bookings / total_bookings * 100), 2) if total_bookings > 0 else 0
-        completion_rate = round((completed_bookings / total_bookings * 100), 2) if total_bookings > 0 else 0
-        satisfaction_rate = round(avg_rating * 20, 1) if avg_rating > 0 else 0
-        
-        return render(request, 'dashboard/provider.html', {
-            'active_services': active_services,
-            'monthly_consultations': monthly_consultations,
-            'monthly_bookings': monthly_bookings,
-            'avg_rating': round(avg_rating, 1),
-            'new_consultation_requests': new_consultation_requests,
-            'new_bookings': new_bookings,
-            'recent_reviews': recent_reviews,
-            'upcoming_appointments': upcoming_appointments,
-            'booking_rate': booking_rate,
-            'satisfaction_rate': satisfaction_rate,
-            'completion_rate': completion_rate,
-            'active_ads': active_ads
-        })
-    else:
+       
+        else:
         # لوحة العميل
-        consultations = Consultation.objects.filter(client=request.user)
-        bookings = Booking.objects.filter(client=request.user)
-        documents = Document.objects.filter(user=request.user)
+            consultations = Consultation.objects.filter(client=request.user)
+            bookings = Booking.objects.filter(client=request.user)
+            documents = Document.objects.filter(user=request.user)
         
         # حساب الإحصائيات
-        active_consultations = consultations.filter(
+            active_consultations = consultations.filter(
             status__in=['pending', 'confirmed']
-        ).count()
+             ).count()
         
-        active_bookings = bookings.filter(
+            active_bookings = bookings.filter(
             status__in=['pending', 'confirmed'],
             slot__start_time__gte=timezone.now()
-        ).count()
+            ).count()
         
-        documents_count = documents.count()
+            documents_count = documents.count()
         
-        unread_notifications = Notification.objects.filter(
+            unread_notifications = Notification.objects.filter(
             user=request.user,
             is_read=False
-        ).count()
+            ).count()
         
         # المواعيد القادمة
-        upcoming_consultations = consultations.filter(
+            upcoming_consultations = consultations.filter(
             slot__start_time__gte=timezone.now(),
             status='confirmed'
-        ).order_by('slot__start_time')[:3]
+             ).order_by('slot__start_time')[:3]
         
-        upcoming_bookings = bookings.filter(
+            upcoming_bookings = bookings.filter(
             slot__start_time__gte=timezone.now(),
             status='confirmed'
-        ).order_by('slot__start_time')[:3]
+            ).order_by('slot__start_time')[:3]
         
         # الوثائق المهمة
-        important_documents = documents.filter(
+            important_documents = documents.filter(
             is_important=True,
             reminder_date__isnull=False
-        ).order_by('reminder_date')[:3]
+             ).order_by('reminder_date')[:3]
         
         # حساب الأيام المتبقية لكل وثيقة
-        for doc in important_documents:
-            doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
-            doc.is_urgent = doc.reminder_days <= 3
+            for doc in important_documents:
+                doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
+                doc.is_urgent = doc.reminder_days <= 3
         
-        return render(request, 'dashboard/client.html', {
-            'active_consultations': active_consultations,
-            'active_bookings': active_bookings,
-            'documents_count': documents_count,
-            'unread_notifications': unread_notifications,
-            'upcoming_consultations': upcoming_consultations,
-            'upcoming_bookings': upcoming_bookings,
-            'important_documents': important_documents,
-            'active_ads': active_ads
+            return render(request, 'dashboard/client.html', {
+                'active_consultations': active_consultations,
+                'active_bookings': active_bookings,
+                'documents_count': documents_count,
+                'unread_notifications': unread_notifications,
+                'upcoming_consultations': upcoming_consultations,
+                'upcoming_bookings': upcoming_bookings,
+                'important_documents': important_documents,
+                'active_ads': active_ads
+                })
+    except Exception as e:
+    
+        return render(request, 'dashboard/error.html', {
+            'error': 'حدث خطأ في تحميل البيانات. يرجى المحاولة لاحقًا.'
         })
-
 @login_required
 def provider_profile(request):
     if request.user.role != User.Role.PROVIDER:

@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify  # Import slugify
 import uuid
+from django.utils import timezone
 # models.py
 
 class UserManager(BaseUserManager):
@@ -218,7 +219,16 @@ class Advertisement(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+    @classmethod
+    def get_active_ads(cls, limit=3):
+        """Alternative as class method"""
+        now = timezone.now().date()
+        return cls.objects.filter(
+            is_active=True,
+            start_date__lte=now,
+            end_date__gte=now
+        ).order_by('-created_at')[:limit]
     def __str__(self):
         return self.title
 
