@@ -158,7 +158,7 @@ def client_dashboard(request):
     # استعلامات البيانات الأساسية
     consultations = Consultation.objects.filter(
         client=request.user
-    ).select_related('slot')
+    ).select_related('slot', 'slot__provider', 'slot__provider__profile')
     
     bookings = Booking.objects.filter(
         client=request.user
@@ -169,7 +169,7 @@ def client_dashboard(request):
     # الإحصائيات
     context = {
         'active_consultations': consultations.filter(
-            status__in=['pending', 'confirmed']
+            status__in=['pending', 'accepted']
         ).count(),
         'active_bookings': bookings.filter(
             status__in=['pending', 'confirmed'],
@@ -182,7 +182,7 @@ def client_dashboard(request):
         ).count(),
         'upcoming_consultations': consultations.filter(
             slot__start_time__gte=timezone.now(),
-            status='confirmed'
+            status='accepted'
         ).order_by('slot__start_time')[:3],
         'upcoming_bookings': bookings.filter(
             slot__start_time__gte=timezone.now(),

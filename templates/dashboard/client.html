@@ -268,10 +268,14 @@
                                         {% for consultation in upcoming_consultations %}
                                         <tr>
                                             <td>
-                                                <a href="{% url 'consultant_detail' consultation.slot.provider.consultant.id %}" class="text-decoration-none">
-                                                    {{ consultation.slot.provider.full_name|truncatechars:20 }}
-                                                </a>
-                                            </td>
+    {% if consultation.slot %}
+        <a href="{% url 'consultant_detail' consultation.slot.provider.consultant.id %}" class="text-decoration-none">
+            {{ consultation.slot.provider.full_name|truncatechars:20 }}
+        </a>
+    {% else %}
+        غير محدد
+    {% endif %}
+</td>
                                             <td>
                                                 {{ consultation.slot.start_time|date:"d/m/Y" }}
                                                 <br><small>{{ consultation.slot.start_time|time:"H:i" }}</small>
