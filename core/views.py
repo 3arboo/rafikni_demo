@@ -75,10 +75,10 @@ def user_login(request):
             # التوجيه حسب الدور
             if user.role == User.Role.PROVIDER:
                 messages.success(request, f'مرحباً بعودتك، {user.full_name}!')
-                return redirect('provider_dashboard')
+                return redirect('dashboard')
             else:
                 messages.success(request, f'مرحباً بعودتك، {user.full_name}!')
-                return redirect('client_dashboard')
+                return redirect('dashboard')
         else:
             # عرض أخطاء محددة
             for field, errors in form.errors.items():
