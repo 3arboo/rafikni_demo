@@ -55,7 +55,7 @@ def register(request):
 
 def user_login(request):
     if request.method == 'POST':
-        form = UserLoginForm(request, data=request.POST)
+        form = UserLoginForm( data=request.POST)
         if form.is_valid():
             user = form.get_user()
             
@@ -171,65 +171,68 @@ def dashboard(request):
         
        
         else:
-        # لوحة العميل
-            consultations = Consultation.objects.filter(client=request.user)
-            bookings = Booking.objects.filter(client=request.user)
+            # Client dashboard - improved version
+            consultations = Consultation.objects.filter(client=request.user).select_related('slot')
+            bookings = Booking.objects.filter(client=request.user).select_related('slot', 'service')
             documents = Document.objects.filter(user=request.user)
-        
-        # حساب الإحصائيات
+            
+            # Active counts with fallback
             active_consultations = consultations.filter(
-            status__in=['pending', 'confirmed']
-             ).count()
-        
+                status__in=['pending', 'confirmed']
+            ).count() or 0
+            
             active_bookings = bookings.filter(
-            status__in=['pending', 'confirmed'],
-            slot__start_time__gte=timezone.now()
-            ).count()
-        
-            documents_count = documents.count()
-        
-            unread_notifications = Notification.objects.filter(
-            user=request.user,
-            is_read=False
-            ).count()
-        
-        # المواعيد القادمة
+                status__in=['pending', 'confirmed'],
+                slot__start_time__gte=timezone.now()
+            ).count() or 0
+            
+            # Upcoming appointments with null checks
             upcoming_consultations = consultations.filter(
-            slot__start_time__gte=timezone.now(),
-            status='confirmed'
-             ).order_by('slot__start_time')[:3]
-        
+                slot__start_time__gte=timezone.now(),
+                status='confirmed'
+            ).order_by('slot__start_time')[:3] or []
+            
             upcoming_bookings = bookings.filter(
-            slot__start_time__gte=timezone.now(),
-            status='confirmed'
-            ).order_by('slot__start_time')[:3]
-        
-        # الوثائق المهمة
-            important_documents = documents.filter(
-            is_important=True,
-            reminder_date__isnull=False
-             ).order_by('reminder_date')[:3]
-        
-        # حساب الأيام المتبقية لكل وثيقة
-            for doc in important_documents:
-                doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
-                doc.is_urgent = doc.reminder_days <= 3
-        
-            return render(request, 'dashboard/client.html', {
+                slot__start_time__gte=timezone.now(),
+                status='confirmed'
+            ).order_by('slot__start_time')[:3] or []
+            
+            # Important documents with safe date handling
+            important_documents = []
+            docs = documents.filter(
+                is_important=True,
+                reminder_date__isnull=False
+            ).order_by('reminder_date')[:3]
+            
+            for doc in docs:
+                try:
+                    doc.reminder_days = (doc.reminder_date - timezone.now().date()).days
+                    doc.is_urgent = doc.reminder_days <= 3
+                    important_documents.append(doc)
+                except Exception:
+                    continue
+            
+            context = {
                 'active_consultations': active_consultations,
                 'active_bookings': active_bookings,
-                'documents_count': documents_count,
-                'unread_notifications': unread_notifications,
+                'documents_count': documents.count(),
+                'unread_notifications': Notification.objects.filter(
+                    user=request.user,
+                    is_read=False
+                ).count(),
                 'upcoming_consultations': upcoming_consultations,
                 'upcoming_bookings': upcoming_bookings,
                 'important_documents': important_documents,
                 'active_ads': active_ads
-                })
+            }
+            return render(request, 'dashboard/client.html', context)
+            
     except Exception as e:
-    
+
         return render(request, 'dashboard/error.html', {
             'error': 'حدث خطأ في تحميل البيانات. يرجى المحاولة لاحقًا.'
-        })
+        }, status=500)
+    
 @login_required
 def provider_profile(request):
     if request.user.role != User.Role.PROVIDER:
