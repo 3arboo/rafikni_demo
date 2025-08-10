@@ -380,7 +380,7 @@ def create_slot(request):
         form = ConsultationSlotForm(request.POST)
         if form.is_valid():
             slot = form.save(commit=False)
-            slot.provider = request.user  # تعيين المستخدم هنا
+            slot.provider = request.user  
             slot.save()
             messages.success(request, 'تم إضافة الموعد بنجاح!')
             return redirect('slot_list')
