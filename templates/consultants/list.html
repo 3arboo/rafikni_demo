@@ -80,17 +80,16 @@
             <div class="row">
                 {% for consultant in consultants %}
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-header position-relative" style="height: 200px;">
-                            <img src="{% if consultant.user.profile.profile_image %}{{ consultant.user.profile.profile_image.url }}{% else %}{% static 'images/default-profile.jpg' %}{% endif %}" 
+                    <div class="card-header position-relative" style="height: 200px;">
+                <img src="{% if consultant.user.profile.profile_image %}{{ consultant.user.profile.profile_image.url }}{% else %}{% static 'images/default-profile.jpg' %}{% endif %}" 
                      class="card-img-top h-100" alt="{{ consultant.user.full_name }}" 
                      style="object-fit: cover;">
                 <div class="position-absolute bottom-0 start-0 p-2">
                     {% for category in consultant.categories.all|slice:":2" %}
                     <span class="badge bg-primary me-1">{{ category.name }}</span>
                     {% endfor %}
-                            </div>
-                        </div>
+                </div>
+            </div>
                         <div class="card-body">
                             <h5 class="card-title">{{ consultant.user.full_name }}</h5>
                             <p class="card-text text-muted">
