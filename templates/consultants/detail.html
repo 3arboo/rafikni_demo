@@ -1,251 +1,164 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ consultant.user.full_name }} - RaFiKNi{% endblock %}
+{% block title %}حجز موعد مع مستشار - {{ consultant.user.full_name }} | RaFiKNi{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="row">
-        <div class="col-lg-4 mb-4">
-            <!-- Consultant Profile Card -->
-            <div class="card shadow-sm sticky-top" style="top: 20px;">
+        <div class="col-md-4 mb-4">
+            <!-- Consultant Card -->
+            <div class="card shadow-sm border-0">
                 <div class="card-body text-center">
-                    <img src="{{ consultant.user.profile.profile_image.url|default:'/static/images/default-profile.jpg' }}" 
-                         class="rounded-circle mb-3" width="150" height="150" 
-                         style="object-fit: cover; border: 3px solid var(--primary);">
-                    <h3>{{ consultant.user.full_name }}</h3>
-                    <h5 class="text-primary mb-3">{{ consultant.title }}</h5>
-                    
-                    <div class="rating mb-3">
-                        <span class="text-warning h4">
-                            <i class="fas fa-star"></i>
-                            {{ consultant.avg_rating|default:"0"|floatformat:1 }}
-                        </span>
-                        <small class="text-muted">({{ consultant.review_count }} تقييمات)</small>
-                    </div>
-                    
-                    <div class="d-flex justify-content-center gap-2 mb-3">
-                        {% for category in consultant.categories.all|slice:":3" %}
-                        <span class="badge bg-primary">{{ category.name }}</span>
-                        {% endfor %}
-                    </div>
-                    
-                    <p class="text-muted mb-4">
-                        <i class="fas fa-clock me-2"></i>
-                        متاح من {{ consultant.available_from|time:"g:i A" }} إلى {{ consultant.available_to|time:"g:i A" }}
+                    <img src="{% if consultant.user.profile.profile_image %}{{ consultant.user.profile.profile_image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                         class="rounded-circle mb-3" width="120" height="120" alt="صورة المستشار">
+                    <h4 class="mb-2">{{ consultant.user.full_name }}</h4>
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-user-tie me-1"></i> مستشار {{ consultant.get_specialization_display }}
                     </p>
                     
-                    <a href="#consultation-form" class="btn btn-primary btn-lg w-100 mb-3">
-                        <i class="fas fa-calendar-check me-2"></i> حجز استشارة
-                    </a>
+                    <div class="rating mb-3">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= consultant.average_rating %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% else %}
+                                <i class="far fa-star text-warning"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="ms-2">({{ consultant.reviews_count }})</span>
+                    </div>
                     
-                    <div class="d-flex justify-content-center gap-3">
-                        {% if consultant.user.profile.website %}
-                        <a href="{{ consultant.user.profile.website }}" target="_blank" class="text-secondary">
-                            <i class="fas fa-globe fa-lg"></i>
-                        </a>
-                        {% endif %}
-                        {% if consultant.user.profile.linkedin %}
-                        <a href="{{ consultant.user.profile.linkedin }}" target="_blank" class="text-secondary">
-                            <i class="fab fa-linkedin fa-lg"></i>
-                        </a>
-                        {% endif %}
-                        {% if consultant.user.profile.twitter %}
-                        <a href="{{ consultant.user.profile.twitter }}" target="_blank" class="text-secondary">
-                            <i class="fab fa-twitter fa-lg"></i>
-                        </a>
-                        {% endif %}
+                    <hr>
+                    
+                    <div class="consultant-info text-start">
+                        <p class="mb-2">
+                            <i class="fas fa-clock me-2 text-primary"></i>
+                            مدة الجلسة: {{ consultant.session_duration }} دقائق
+                        </p>
+                        <p class="mb-2">
+                            <i class="fas fa-money-bill-wave me-2 text-primary"></i>
+                            سعر الجلسة: {{ consultant.session_price }} ر.س
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-calendar-check me-2 text-primary"></i>
+                            مواعيد متاحة: {{ available_slots|length }}
+                        </p>
                     </div>
                 </div>
             </div>
             
-            <!-- Sidebar Ad -->
-            {% if active_ads %}
-            <div class="card mt-4 border-0 shadow-sm">
-                <div class="card-body p-0">
-                    <a href="{{ active_ads.0.link }}" target="_blank">
-                        <img src="{{ active_ads.0.image.url }}" class="img-fluid rounded" alt="إعلان">
-                    </a>
+            <!-- Consultant Schedule -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>أوقات العمل</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for day, hours in consultant.working_hours.items %}
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span>{{ day }}</span>
+                                <span class="text-muted">
+                                    {% if hours.off %}
+                                        إجازة
+                                    {% else %}
+                                        من {{ hours.start }} إلى {{ hours.end }}
+                                    {% endif %}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
-            {% endif %}
         </div>
         
-        <div class="col-lg-8">
-            <!-- Consultant Details -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h4 class="card-title border-bottom pb-3 mb-3">نبذة عن المستشار</h4>
-                    <p class="card-text">{{ consultant.bio|linebreaks }}</p>
-                    
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <h5><i class="fas fa-graduation-cap text-primary me-2"></i> المؤهلات العلمية</h5>
-                            <ul class="list-unstyled ms-4">
-                                {% for qualification in consultant.qualifications.all %}
-                                <li class="mb-2">
-                                    <i class="fas fa-circle text-primary" style="font-size: 8px; vertical-align: middle;"></i>
-                                    {{ qualification.degree }} في {{ qualification.field }}
-                                </li>
-                                {% empty %}
-                                <li class="text-muted">لا توجد مؤهلات مسجلة</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h5><i class="fas fa-briefcase text-primary me-2"></i> الخبرات العملية</h5>
-                            <ul class="list-unstyled ms-4">
-                                {% for experience in consultant.experiences.all %}
-                                <li class="mb-2">
-                                    <i class="fas fa-circle text-primary" style="font-size: 8px; vertical-align: middle;"></i>
-                                    {{ experience.position }} في {{ experience.company }}
-                                </li>
-                                {% empty %}
-                                <li class="text-muted">لا توجد خبرات مسجلة</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
+        <div class="col-md-8">
             <!-- Available Slots -->
-            <div class="card shadow-sm mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>المواعيد المتاحة</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary" id="prev-week">
+                            <i class="fas fa-chevron-right"></i> الأسبوع السابق
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="next-week">
+                            الأسبوع القادم <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="card-body">
-                    <h4 class="card-title border-bottom pb-3 mb-3">المواعيد المتاحة</h4>
-                    
                     {% if available_slots %}
-                    <div class="row">
-                        {% for slot in available_slots %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card border-primary">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">{{ slot.start_time|date:"l" }}</h5>
-                                    <p class="card-text">
-                                        {{ slot.start_time|date:"Y/m/d" }}<br>
-                                        {{ slot.start_time|time:"g:i A" }} - {{ slot.end_time|time:"g:i A" }}
-                                    </p>
-                                    <a href="{% url 'book_consultation' slot.id %}" class="btn btn-sm btn-outline-primary">
-                                        حجز الموعد
-                                    </a>
-                                </div>
+                        <!-- Week Navigation -->
+                        <div class="d-flex justify-content-center mb-4">
+                            <div class="btn-group" role="group">
+                                {% for date in week_dates %}
+                                    <button type="button" class="btn btn-outline-primary day-filter {% if date == selected_date %}active{% endif %}" 
+                                            data-date="{{ date|date:'Y-m-d' }}">
+                                        {{ date|date:"D" }}<br>
+                                        {{ date|date:"d/m" }}
+                                    </button>
+                                {% endfor %}
                             </div>
                         </div>
-                        {% endfor %}
-                    </div>
+                        
+                        <!-- Slots Grid -->
+                        <div class="row" id="slots-container">
+                            {% regroup available_slots by start_time.date as slots_by_date %}
+                            {% for date, slots in slots_by_date %}
+                                <div class="col-12 date-slots" data-date="{{ date|date:'Y-m-d' }}">
+                                    <h6 class="mb-3">{{ date|date:"l، d F Y" }}</h6>
+                                    <div class="row">
+                                        {% for slot in slots %}
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card slot-card {% if slot.is_booked %}border-danger{% else %}border-success{% endif %}">
+                                                    <div class="card-body text-center">
+                                                        <h5 class="card-title">{{ slot.start_time|time:"h:i A" }}</h5>
+                                                        <p class="card-text text-muted small">
+                                                            حتى {{ slot.end_time|time:"h:i A" }}
+                                                        </p>
+                                                        
+                                                        {% if not slot.is_booked %}
+                                                            <form method="post" action="{% url 'book_slot' slot.id %}" class="booking-form">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn btn-sm btn-success w-100">
+                                                                    <i class="fas fa-calendar-check me-1"></i> احجز الآن
+                                                                </button>
+                                                            </form>
+                                                        {% else %}
+                                                            <button class="btn btn-sm btn-outline-secondary w-100" disabled>
+                                                                <i class="fas fa-times-circle me-1"></i> محجوز
+                                                            </button>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
-                    <div class="alert alert-info text-center">
-                        لا توجد مواعيد متاحة حالياً. يرجى المحاولة لاحقاً.
-                    </div>
+                        <div class="alert alert-info text-center py-5">
+                            <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                            <h4>لا توجد مواعيد متاحة حالياً</h4>
+                            <p class="mb-0">يرجى المحاولة لاحقاً أو التواصل مع المستشار</p>
+                        </div>
                     {% endif %}
                 </div>
             </div>
             
-            <!-- Consultation Request Form -->
-            <div class="card shadow-sm mb-4" id="consultation-form">
-                <div class="card-body">
-                    <h4 class="card-title border-bottom pb-3 mb-3">طلب استشارة</h4>
-                    <form method="post" action="{% url 'request_consultation' consultant.id %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="category" class="form-label">التخصص</label>
-                            <select class="form-select" id="category" name="category" required>
-                                <option value="" selected disabled>اختر تخصص الاستشارة</option>
-                                {% for category in consultant.categories.all %}
-                                <option value="{{ category.id }}">{{ category.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="question" class="form-label">تفاصيل الاستشارة</label>
-                            <textarea class="form-control" id="question" name="question" rows="5" 
-                                      placeholder="صف استشارتك بالتفصيل..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane me-2"></i> إرسال الطلب
-                        </button>
-                    </form>
+            <!-- Booking Instructions -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>تعليمات الحجز</h6>
                 </div>
-            </div>
-            
-            <!-- Reviews Section -->
-            <div class="card shadow-sm">
                 <div class="card-body">
-                    <h4 class="card-title border-bottom pb-3 mb-3">تقييمات العملاء</h4>
-                    
-                    {% if reviews %}
-                    <div class="mb-4">
-                        {% for review in reviews %}
-                        <div class="mb-4 pb-3 border-bottom">
-                            <div class="d-flex justify-content-between mb-2">
-                                <div>
-                                    <strong>{{ review.reviewer.full_name }}</strong>
-                                    <span class="text-muted ms-2">{{ review.created_at|date:"Y/m/d" }}</span>
-                                </div>
-                                <div class="text-warning">
-                                    {% for i in "12345" %}
-                                    {% if forloop.counter <= review.rating %}
-                                    <i class="fas fa-star"></i>
-                                    {% else %}
-                                    <i class="far fa-star"></i>
-                                    {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <p>{{ review.comment }}</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info text-center">
-                        لا توجد تقييمات حتى الآن.
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_review %}
-                    <div class="card border-primary">
-                        <div class="card-header bg-primary text-white">
-                            تقييمك السابق
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-2">
-                                <div class="text-warning">
-                                    {% for i in "12345" %}
-                                    {% if forloop.counter <= user_review.rating %}
-                                    <i class="fas fa-star"></i>
-                                    {% else %}
-                                    <i class="far fa-star"></i>
-                                    {% endif %}
-                                    {% endfor %}
-                                </div>
-                                <span class="text-muted">{{ user_review.created_at|date:"Y/m/d" }}</span>
-                            </div>
-                            <p>{{ user_review.comment }}</p>
-                        </div>
-                    </div>
-                    {% else %}
-                    <form method="post" action="{% url 'consultant_detail' consultant.id %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="review" value="true">
-                        <div class="mb-3">
-                            <label class="form-label">تقييمك</label>
-                            <div class="rating-input mb-3">
-                                {% for i in "54321" %}
-                                <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
-                                <label for="star{{ i }}" class="text-warning" style="font-size: 1.5rem;">
-                                    <i class="far fa-star"></i>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="comment" class="form-label">تعليقك</label>
-                            <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-star me-2"></i> إرسال التقييم
-                        </button>
-                    </form>
-                    {% endif %}
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> سيتم تأكيد الحجز بعد سداد الرسوم</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> يمكنك إلغاء الحجز قبل 24 ساعة من الموعد</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> سيتم إرسال رسالة تأكيد عبر البريد الإلكتروني</li>
+                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> يمكنك إدارة حجوزاتك من لوحة التحكم</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -253,53 +166,104 @@
 </div>
 
 <style>
-    .rating-input input {
+    .slot-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .slot-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .day-filter {
+        min-width: 60px;
+    }
+    
+    .date-slots {
         display: none;
     }
-    .rating-input input:checked ~ label i,
-    .rating-input label:hover i,
-    .rating-input label:hover ~ label i {
-        font-weight: 900;
+    
+    .date-slots.active {
+        display: block;
     }
-    .sticky-top {
-        position: -webkit-sticky;
-        position: sticky;
+    
+    .consultant-info i {
+        width: 20px;
+        text-align: center;
     }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Rating stars interaction
-    const stars = document.querySelectorAll('.rating-input label');
-    stars.forEach(star => {
-        star.addEventListener('click', function() {
-            const input = document.getElementById(this.htmlFor);
-            const value = input.value;
+    // Filter slots by selected day
+    const dayFilters = document.querySelectorAll('.day-filter');
+    const dateSlots = document.querySelectorAll('.date-slots');
+    
+    // Show today's slots by default
+    const today = new Date().toISOString().split('T')[0];
+    let activeDate = today;
+    
+    // Check if selected date is in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('date')) {
+        activeDate = urlParams.get('date');
+    }
+    
+    // Activate the correct day filter
+    dayFilters.forEach(filter => {
+        if (filter.dataset.date === activeDate) {
+            filter.classList.add('active');
+        }
+        
+        filter.addEventListener('click', function() {
+            // Update active date
+            activeDate = this.dataset.date;
             
-            // Update all stars up to the selected one
-            for (let i = 5; i >= 1; i--) {
-                const starLabel = document.querySelector(`label[for="star${i}"] i`);
-                if (i <= value) {
-                    starLabel.classList.add('fas');
-                    starLabel.classList.remove('far');
+            // Update URL without reloading
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('date', activeDate);
+            window.history.pushState({}, '', newUrl);
+            
+            // Update active filter
+            dayFilters.forEach(f => f.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show corresponding slots
+            dateSlots.forEach(slot => {
+                if (slot.dataset.date === activeDate) {
+                    slot.classList.add('active');
                 } else {
-                    starLabel.classList.add('far');
-                    starLabel.classList.remove('fas');
+                    slot.classList.remove('active');
                 }
-            }
+            });
         });
     });
     
-    // Smooth scroll for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                window.scrollTo({
-                    top: target.offsetTop - 100,
-                    behavior: 'smooth'
-                });
+    // Show first day's slots if none is active
+    if (document.querySelector('.date-slots.active') === null && dateSlots.length > 0) {
+        dateSlots[0].classList.add('active');
+    }
+    
+    // Week navigation buttons
+    document.getElementById('prev-week').addEventListener('click', function() {
+        const currentDate = new Date(activeDate);
+        currentDate.setDate(currentDate.getDate() - 7);
+        window.location.href = `?date=${currentDate.toISOString().split('T')[0]}`;
+    });
+    
+    document.getElementById('next-week').addEventListener('click', function() {
+        const currentDate = new Date(activeDate);
+        currentDate.setDate(currentDate.getDate() + 7);
+        window.location.href = `?date=${currentDate.toISOString().split('T')[0]}`;
+    });
+    
+    // Confirm before booking
+    const bookingForms = document.querySelectorAll('.booking-form');
+    bookingForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            if (!confirm('هل أنت متأكد من حجز هذا الموعد؟ سيتم خصم المبلغ من رصيدك.')) {
+                e.preventDefault();
             }
         });
     });

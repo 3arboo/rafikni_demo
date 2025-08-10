@@ -21,6 +21,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.http import JsonResponse
 from django.db.models.functions import Coalesce
 from django.db import transaction
+from datetime import timedelta
 # ---- المصادقة والملف الشخصي ---- #
 def register(request):
     if request.method == 'POST':
@@ -431,6 +432,9 @@ def browse_consultants(request):
         'active_ads': active_ads
     })
 
+
+
+
 def consultant_detail(request, pk):
     consultant = get_object_or_404(Consultant, pk=pk, available=True)
     services = Service.objects.filter(provider=consultant.user, is_active=True)
@@ -441,10 +445,13 @@ def consultant_detail(request, pk):
         start_time__gte=timezone.now()
     ).order_by('start_time')
     
-    # حساب متوسط التقييمات
+    # Calculate average rating
     avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
     
-    # التحقق إذا كان المستخدم قد قام بتقييم هذا المستشار من قبل
+    # Calculate reviews count
+    reviews_count = reviews.count()
+    
+    # Handle user review
     user_review = None
     if request.user.is_authenticated:
         user_review = reviews.filter(reviewer=request.user).first()
@@ -457,7 +464,7 @@ def consultant_detail(request, pk):
         form = ReviewForm(request.POST)
         if form.is_valid():
             review = form.save(commit=False)
-            review.service = services.first()  # ربط التقييم بأحد خدمات المستشار
+            review.service = services.first()
             review.reviewer = request.user
             review.save()
             messages.success(request, 'شكراً لتقييمك هذا المستشار!')
@@ -465,12 +472,27 @@ def consultant_detail(request, pk):
     else:
         form = ReviewForm(instance=user_review)
     
-    # الحصول على الإعلانات النشطة
+    # Generate week dates
+    selected_date = request.GET.get('date', timezone.now().date().isoformat())
+    try:
+        selected_date = timezone.datetime.strptime(selected_date, '%Y-%m-%d').date()
+    except ValueError:
+        selected_date = timezone.now().date()
+    
+    # Calculate the start of the week (assuming week starts on Sunday)
+    start_of_week = selected_date - timedelta(days=selected_date.weekday() + 1)
+    week_dates = [start_of_week + timedelta(days=i) for i in range(7)]
+    
+    # Add consultant-specific attributes to context
+    consultant.average_rating = round(avg_rating, 1)
+    consultant.reviews_count = reviews_count
+    
+    # Active ads
     active_ads = Advertisement.objects.filter(
         is_active=True,
         start_date__lte=timezone.now().date(),
         end_date__gte=timezone.now().date()
-    ).order_by('?')[:1]  # 1 إعلان عشوائي
+    ).order_by('?')[:1]
     
     return render(request, 'consultants/detail.html', {
         'consultant': consultant,
@@ -480,7 +502,9 @@ def consultant_detail(request, pk):
         'avg_rating': round(avg_rating, 1),
         'user_review': user_review,
         'form': form,
-        'active_ads': active_ads
+        'active_ads': active_ads,
+        'week_dates': week_dates,
+        'selected_date': selected_date
     })
 
 # ---- إدارة الوثائق ---- #
