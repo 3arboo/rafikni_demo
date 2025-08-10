@@ -832,7 +832,7 @@ def edit_consultant(request):
     consultant = get_object_or_404(Consultant, user=request.user)
     
     if request.method == 'POST':
-        form = ConsultantForm(request.POST, request.FILES, request=request, instance=consultant)
+        form = ConsultantForm(request.POST, request.FILES, instance=consultant, request=request)
         if form.is_valid():
             form.save()
             return redirect('provider_profile')

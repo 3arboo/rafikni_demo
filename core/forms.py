@@ -302,6 +302,40 @@ class ConsultantForm(forms.ModelForm):
         })
     )
 
+from django import forms
+from .models import Consultant
+
+class ConsultantForm(forms.ModelForm):
+    # الحقول الإضافية لأيام الأسبوع
+    saturday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input',
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    sunday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input',
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    monday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input',
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    tuesday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input',
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    wednesday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input',
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    thursday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input',
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+    friday = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control working-hours-input',
+        'placeholder': 'مثال: 09:00 - 17:00'
+    }))
+
     class Meta:
         model = Consultant
         fields = ['bio', 'profile_image', 'categories']
@@ -311,25 +345,25 @@ class ConsultantForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
+        # استخراج request من kwargs إذا كان موجوداً
+        self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
-        # يمكنك هنا تحميل أي بيانات أولية إذا كانت مخزنة في مكان آخر
         
     def save(self, commit=True):
         consultant = super().save(commit=False)
-        # هنا يمكنك حفظ بيانات أوقات العمل في مكان مناسب
-        # مثل جلسة المستخدم أو نموذج آخر مرتبط
-        working_hours = {
-            'saturday': self.cleaned_data['saturday'],
-            'sunday': self.cleaned_data['sunday'],
-            'monday': self.cleaned_data['monday'],
-            'tuesday': self.cleaned_data['tuesday'],
-            'wednesday': self.cleaned_data['wednesday'],
-            'thursday': self.cleaned_data['thursday'],
-            'friday': self.cleaned_data['friday'],
-        }
-        request = self.request
-        if request:
-            request.session['consultant_working_hours'] = working_hours
+        
+        # حفظ أوقات العمل في الجلسة إذا كان request متاحاً
+        if self.request:
+            working_hours = {
+                'saturday': self.cleaned_data['saturday'],
+                'sunday': self.cleaned_data['sunday'],
+                'monday': self.cleaned_data['monday'],
+                'tuesday': self.cleaned_data['tuesday'],
+                'wednesday': self.cleaned_data['wednesday'],
+                'thursday': self.cleaned_data['thursday'],
+                'friday': self.cleaned_data['friday'],
+            }
+            self.request.session['consultant_working_hours'] = working_hours
         
         if commit:
             consultant.save()
