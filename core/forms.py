@@ -251,67 +251,73 @@ class BookSlotForm(forms.ModelForm):
 
 # forms.py
 class ConsultantForm(forms.ModelForm):
-    # الحقول الإضافية (ليست جزءًا من الموديل)
-    title = forms.CharField(
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+    # الحقول الإضافية لأيام الأسبوع
+    saturday = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control working-hours-input',
+            'placeholder': 'مثال: 09:00 - 17:00'
+        })
     )
-    session_duration = forms.IntegerField(
-        min_value=15,
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    sunday = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control working-hours-input',
+            'placeholder': 'مثال: 09:00 - 17:00'
+        })
     )
-    session_price = forms.DecimalField(
-        min_value=0,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': 0.01})
+    monday = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control working-hours-input',
+            'placeholder': 'مثال: 09:00 - 17:00'
+        })
     )
-    saturday = forms.CharField(required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control working-hours-input', 
-        'placeholder': 'مثال: 09:00 - 17:00'
-    }))
-    sunday = forms.CharField(required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control working-hours-input', 
-        'placeholder': 'مثال: 09:00 - 17:00'
-    }))
-    monday = forms.CharField(required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control working-hours-input', 
-        'placeholder': 'مثال: 09:00 - 17:00'
-    }))
-    tuesday = forms.CharField(required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control working-hours-input', 
-        'placeholder': 'مثال: 09:00 - 17:00'
-    }))
-    wednesday = forms.CharField(required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control working-hours-input', 
-        'placeholder': 'مثال: 09:00 - 17:00'
-    }))
-    thursday = forms.CharField(required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control working-hours-input', 
-        'placeholder': 'مثال: 09:00 - 17:00'
-    }))
-    friday = forms.CharField(required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control working-hours-input', 
-        'placeholder': 'مثال: 09:00 - 17:00'
-    }))
+    tuesday = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control working-hours-input',
+            'placeholder': 'مثال: 09:00 - 17:00'
+        })
+    )
+    wednesday = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control working-hours-input',
+            'placeholder': 'مثال: 09:00 - 17:00'
+        })
+    )
+    thursday = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control working-hours-input',
+            'placeholder': 'مثال: 09:00 - 17:00'
+        })
+    )
+    friday = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control working-hours-input',
+            'placeholder': 'مثال: 09:00 - 17:00'
+        })
+    )
+
     class Meta:
         model = Consultant
-        fields = ['bio', 'categories']  # الحقول الموجودة فعلياً في الموديل
+        fields = ['bio', 'profile_image', 'categories']
         widgets = {
             'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'categories': forms.SelectMultiple(attrs={'class': 'form-select'}),
         }
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # تحميل بيانات أوقات العمل إذا كانت موجودة
-        if self.instance and self.instance.working_hours:
-            try:
-                working_hours = json.loads(self.instance.working_hours)
-                for day in ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday']:
-                    self.fields[day].initial = working_hours.get(day, '')
-            except json.JSONDecodeError:
-                pass
-    
+        # يمكنك هنا تحميل أي بيانات أولية إذا كانت مخزنة في مكان آخر
+        
     def save(self, commit=True):
         consultant = super().save(commit=False)
-        # تجميع أوقات العمل في JSON
+        # هنا يمكنك حفظ بيانات أوقات العمل في مكان مناسب
+        # مثل جلسة المستخدم أو نموذج آخر مرتبط
         working_hours = {
             'saturday': self.cleaned_data['saturday'],
             'sunday': self.cleaned_data['sunday'],
@@ -321,7 +327,10 @@ class ConsultantForm(forms.ModelForm):
             'thursday': self.cleaned_data['thursday'],
             'friday': self.cleaned_data['friday'],
         }
-        consultant.working_hours = json.dumps(working_hours)
+        request = self.request
+        if request:
+            request.session['consultant_working_hours'] = working_hours
+        
         if commit:
             consultant.save()
             self.save_m2m()
