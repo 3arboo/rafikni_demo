@@ -554,7 +554,7 @@ def home(request):
     # الحصول على الإعلانات النشطة للصفحة الرئيسية
     featured_ads = Advertisement.objects.filter(
         is_active=True,
-        is_featured=True,
+        #is_featured=True,
         start_date__lte=timezone.now().date(),
         end_date__gte=timezone.now().date()
     ).order_by('-created_at')[:3]
