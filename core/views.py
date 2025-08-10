@@ -20,6 +20,7 @@ import uuid
 from django.contrib.auth import login, logout, authenticate
 from django.http import JsonResponse
 from django.db.models.functions import Coalesce
+from django.db import transaction
 # ---- المصادقة والملف الشخصي ---- #
 def register(request):
     if request.method == 'POST':
@@ -768,3 +769,37 @@ def cancel_booking(request, pk):
         return redirect('my_bookings')
     
     return render(request, 'bookings/cancel_confirm.html', {'booking': booking})
+
+@login_required
+def available_slots(request):
+    slots = ConsultationSlot.objects.filter(is_booked=False, start__gte=timezone.now()).order_by('start')
+    return render(request, 'consultations/available_slots.html', {'slots': slots})
+
+@login_required
+def book_slot(request, slot_id):
+    # منع مزوّد الخدمة من حجز الـ slot الخاص به
+    slot = get_object_or_404(ConsultationSlot, pk=slot_id)
+    if slot.provider_id == request.user.id:
+        messages.error(request, 'لا يمكنك حجز موعد قدمته أنت كمزوّد خدمة.')
+        return redirect('available_slots')
+
+    # استخدم معاملة لقفل الصف وتجنّب السباق (race condition)
+    try:
+        with transaction.atomic():
+            locked_slot = (ConsultationSlot.objects
+                           .select_for_update()
+                           .get(pk=slot_id))
+            if locked_slot.is_booked:
+                messages.error(request, 'تم حجز هذا الموعد بالفعل.')
+                return redirect('available_slots')
+
+            # أنشئ الحجز
+            Booking.objects.create(slot=locked_slot, client=request.user)
+            locked_slot.is_booked = True
+            locked_slot.save()
+
+        messages.success(request, 'تم حجز الموعد بنجاح!')
+        return redirect('my_bookings')  # أو أي صفحة تريد
+    except ConsultationSlot.DoesNotExist:
+        messages.error(request, 'الموعد غير موجود.')
+        return redirect('available_slots')

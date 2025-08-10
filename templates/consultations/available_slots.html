@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>المواعيد المتاحة</h2>
+  {% for slot in slots %}
+    <div class="slot-card">
+      <p>المزوّد: {{ slot.provider.get_full_name|default:consultation.slot.provider.full_name }}</p>
+      <p>من: {{ slot.start }} — إلى: {{ slot.end }}</p>
+      <form method="post" action="{% url 'book_slot' slot.id %}">
+        {% csrf_token %}
+        <button type="submit">احجز هذا الموعد</button>
+      </form>
+    </div>
+  {% empty %}
+    <p>لا توجد مواعيد متاحة حالياً.</p>
+  {% endfor %}
+{% endblock %}

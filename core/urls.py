@@ -26,7 +26,8 @@ urlpatterns = [
     # Consultation Slot URLs
     path('slots/', views.slot_list, name='slot_list'),
     path('slots/create/', views.create_slot, name='create_slot'),
-    
+    path('slots/', views.available_slots, name='available_slots'),
+    path('slots/<int:slot_id>/book/', views.book_slot, name='book_slot'),
     # Consultants URLs
     path('consultants/', views.browse_consultants, name='browse_consultants'),
     path('consultant/<int:pk>/', views.consultant_detail, name='consultant_detail'),

@@ -7,7 +7,7 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>حجوزاتي</h2>
-        <a href="{% url 'my_bookings' %}" class="btn btn-primary">
+        <a href="{% url 'book_slot' %}" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i> حجز جديد
         </a>
     </div>
@@ -116,7 +116,7 @@
                 <i class="fas fa-calendar-times fa-3x mb-3"></i>
                 <h4>لا توجد حجوزات</h4>
                 <p class="mb-4">لم تقم بأي حجوزات حتى الآن</p>
-                <a href="{% url 'my_bookings' %}" class="btn btn-primary btn-lg">
+                <a href="{% url 'book_slot' %}" class="btn btn-primary btn-lg">
                     <i class="fas fa-plus me-2"></i> احجز خدمة الآن
                 </a>
             </div>
