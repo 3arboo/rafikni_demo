@@ -11,20 +11,16 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-filter me-2"></i>
-                        تصفية النتائج
+                        <i class="fas fa-filter me-2"></i> تصفية النتائج
                     </h5>
                 </div>
                 <div class="card-body">
                     <form method="get" action="{% url 'browse_consultants' %}">
-                        <!-- Search Box -->
                         <div class="mb-3">
                             <label for="search" class="form-label">بحث</label>
                             <input type="text" class="form-control" id="autocomplete" name="q" 
                                    value="{{ search_query }}" placeholder="ابحث عن مستشار...">
                         </div>
-                        
-                        <!-- Category Filter -->
                         <div class="mb-3">
                             <label class="form-label">التخصصات</label>
                             {% if categories %}
@@ -44,15 +40,12 @@
                             <p class="text-muted">لا توجد تخصصات متاحة</p>
                             {% endif %}
                         </div>
-                        
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="fas fa-search me-2"></i> تطبيق الفلتر
                         </button>
                     </form>
                 </div>
             </div>
-            
-            <!-- Advertisement -->
             {% if active_ads and active_ads.0.image %}
             <div class="card mt-4 border-0 shadow-sm">
                 <div class="card-body p-0">
@@ -80,7 +73,6 @@
                     {{ consultants.paginator.count }} مستشار
                 </span>
             </div>
-            
             {% if consultants %}
             <div class="row">
                 {% for consultant in consultants %}
@@ -122,8 +114,6 @@
                 </div>
                 {% endfor %}
             </div>
-            
-            <!-- Pagination -->
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
                     {% if consultants.has_previous %}
@@ -138,7 +128,6 @@
                         </a>
                     </li>
                     {% endif %}
-                    
                     {% for num in consultants.paginator.get_elided_page_range %}
                     {% if num == consultants.number %}
                     <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
@@ -146,7 +135,6 @@
                     <li class="page-item"><a class="page-link" href="?page={{ num }}&q={{ search_query }}{% if selected_category %}&category={{ selected_category.id }}{% endif %}">{{ num }}</a></li>
                     {% endif %}
                     {% endfor %}
-                    
                     {% if consultants.has_next %}
                     <li class="page-item">
                         <a class="page-link" href="?page={{ consultants.next_page_number }}&q={{ search_query }}{% if selected_category %}&category={{ selected_category.id }}{% endif %}" aria-label="Next">
@@ -182,17 +170,9 @@
 </div>
 
 <style>
-    .consultant-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .consultant-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-    .list-group-item.active {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-    }
+.consultant-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.consultant-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+.list-group-item.active { background-color: #0d6efd; border-color: #0d6efd; }
 </style>
 
 <script>
@@ -204,9 +184,7 @@ $(function() {
             window.location.href = ui.item.url;
         }
     }).autocomplete("instance")._renderItem = function(ul, item) {
-        return $("<li>")
-            .append("<div>" + item.label + "</div>")
-            .appendTo(ul);
+        return $("<li>").append("<div>" + item.label + "</div>").appendTo(ul);
     };
 });
 </script>

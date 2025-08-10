@@ -16,12 +16,31 @@
                     <p class="text-muted">{{ consultant.title|default:"مستشار محترف" }}</p>
                     <div class="rating mb-2">
                         <span class="text-warning">
-                            <i class="fas fa-star"></i> {{ avg_rating|floatformat:1 }}
+                            <i class="fas fa-star"></i> {{ consultant.avg_rating|default:"0.0"|floatformat:1 }}
                         </span>
-                        <small class="text-muted">({{ consultant.reviews_count }} تقييمات)</small>
+                        <small class="text-muted">({{ consultant.review_count }} تقييمات)</small>
                     </div>
-                    <p><strong>مدة الجلسة:</strong> {{ consultant.session_duration }} دقيقة</p>
-                    <p><strong>السعر:</strong> {{ consultant.session_price }} ر.س</p>
+                    <p><strong>مدة الجلسة:</strong> {{ consultant.session_duration|default:"غير محدد" }} دقيقة</p>
+                    <p><strong>السعر:</strong> {{ consultant.session_price|default:"غير محدد" }} ر.س</p>
+                    {% if consultant.categories.all %}
+                    <p><strong>التخصصات:</strong>
+                        {% for category in consultant.categories.all %}
+                        <span class="badge bg-primary me-1">{{ category.name }}</span>
+                        {% endfor %}
+                    </p>
+                    {% else %}
+                    <p class="text-muted">
+                        لا توجد تخصصات محددة
+                        {% if request.user == consultant.user %}
+                        <a href="{% url 'edit_consultant' %}" class="text-primary">أضف تخصصات</a>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    {% if request.user == consultant.user %}
+                    <a href="{% url 'edit_consultant' %}" class="btn btn-outline-primary mt-3">
+                        <i class="fas fa-edit me-1"></i> تعديل البيانات
+                    </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -31,58 +50,119 @@
                     <h6 class="mb-0"><i class="fas fa-clock me-2"></i> ساعات العمل</h6>
                 </div>
                 <div class="card-body">
-                    {% for day, hours in consultant.working_hours.items %}
-                    <div class="d-flex justify-content-between">
-                        <span>{{ day }}</span>
-                        <span>
-                            {% if hours.off %}
-                            مغلق
-                            {% else %}
-                            {{ hours.start }} - {{ hours.end }}
-                            {% endif %}
-                        </span>
-                    </div>
-                    {% endfor %}
+                    {% if consultant.working_hours %}
+                    <ul class="list-unstyled">
+                        {% for day, hours in consultant.working_hours.items %}
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span>{{ day }}</span>
+                            <span class="text-muted">
+                                {% if hours.off %}
+                                    إجازة
+                                {% else %}
+                                    من {{ hours.start }} إلى {{ hours.end }}
+                                {% endif %}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-center text-muted">
+                        لا توجد ساعات عمل محددة
+                        {% if request.user == consultant.user %}
+                        <a href="{% url 'edit_consultant' %}" class="text-primary">أضف ساعات العمل</a>
+                        {% endif %}
+                    </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Booking Slots -->
+        <!-- Available Slots -->
         <div class="col-md-8">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">حجز موعد</h5>
+                    <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i> المواعيد المتاحة</h5>
                     <div class="btn-group">
-                        {% for date in week_dates %}
-                        <a href="?date={{ date|date:'Y-m-d' }}" 
-                           class="btn btn-sm btn-outline-primary {% if selected_date == date %}active{% endif %}">
-                            {{ date|date:"D d/m" }}
-                        </a>
-                        {% endfor %}
+                        <button class="btn btn-sm btn-outline-secondary" id="prev-week">
+                            <i class="fas fa-chevron-right"></i> الأسبوع السابق
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="next-week">
+                            الأسبوع القادم <i class="fas fa-chevron-left"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
                     {% if available_slots %}
-                    <div class="row">
-                        {% for slot in available_slots %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card">
-                                <div class="card-body text-center">
-                                    <p class="mb-1">{{ slot.start_time|date:"D, d/m/Y" }}</p>
-                                    <p class="mb-1">{{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</p>
-                                    <form method="post" action="{% url 'book_consultation' slot.id %}" class="booking-form">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-success w-100">
-                                            <i class="fas fa-calendar-check me-1"></i> احجز الآن
-                                        </button>
-                                    </form>
+                    <!-- Week Navigation -->
+                    <div class="d-flex justify-content-center mb-4">
+                        <div class="btn-group" role="group">
+                            {% for date in week_dates %}
+                            <button type="button" class="btn btn-outline-primary day-filter {% if date == selected_date %}active{% endif %}" 
+                                    data-date="{{ date|date:'Y-m-d' }}">
+                                {{ date|date:"D" }}<br>{{ date|date:"d/m" }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- Slots Grid -->
+                    <div class="row" id="slots-container">
+                        {% regroup available_slots by start_time.date as slots_by_date %}
+                        {% for date_group in slots_by_date %}
+                        <div class="col-12 date-slots {% if date_group.grouper == selected_date %}active{% endif %}" 
+                             data-date="{{ date_group.grouper|date:'Y-m-d' }}">
+                            <h6 class="mb-3">{{ date_group.grouper|date:"l، d F Y" }}</h6>
+                            <div class="row">
+                                {% for slot in date_group.list %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card slot-card {% if slot.is_booked %}border-danger{% else %}border-success{% endif %}">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">{{ slot.start_time|time:"h:i A" }}</h5>
+                                            <p class="card-text text-muted small">
+                                                حتى {{ slot.end_time|time:"h:i A" }}
+                                            </p>
+                                            {% if not slot.is_booked %}
+                                            <form method="post" action="{% url 'book_consultation' slot.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-success w-100" 
+                                                        onclick="return confirm('هل أنت متأكد من حجز هذا الموعد؟ سيتم خصم المبلغ من رصيدك.')">
+                                                    <i class="fas fa-calendar-check me-1"></i> احجز الآن
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary w-100" disabled>
+                                                <i class="fas fa-times-circle me-1"></i> محجوز
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
+                                {% endfor %}
                             </div>
+                        </div>
+                        {% empty %}
+                        <div class="alert alert-info text-center py-5">
+                            <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                            <h4>لا توجد مواعيد متاحة حالياً</h4>
+                            <p class="mb-0">يرجى المحاولة لاحقاً أو التواصل مع المستشار</p>
+                            {% if request.user == consultant.user %}
+                            <a href="{% url 'create_slot' %}" class="btn btn-primary mt-3">
+                                <i class="fas fa-plus me-1"></i> إضافة موعد جديد
+                            </a>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
                     {% else %}
-                    <p class="text-center text-muted">لا توجد مواعيد متاحة في الوقت الحالي</p>
+                    <div class="alert alert-info text-center py-5">
+                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                        <h4>لا توجد مواعيد متاحة حالياً</h4>
+                        <p class="mb-0">يرجى المحاولة لاحقاً أو التواصل مع المستشار</p>
+                        {% if request.user == consultant.user %}
+                        <a href="{% url 'create_slot' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-plus me-1"></i> إضافة موعد جديد
+                        </a>
+                        {% endif %}
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -90,7 +170,7 @@
             <!-- Reviews Section -->
             <div class="card shadow-sm border-0 mt-4">
                 <div class="card-header bg-white">
-                    <h6 class="mb-0"><i class="fas fa-star me-2"></i>التقييمات</h6>
+                    <h6 class="mb-0"><i class="fas fa-star me-2"></i> التقييمات</h6>
                 </div>
                 <div class="card-body">
                     {% if reviews %}
@@ -121,31 +201,74 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Advertisement -->
-    {% if active_ads %}
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-0">
-                    <a href="{{ active_ads.0.link }}" target="_blank">
-                        <img src="{{ active_ads.0.image.url }}" class="img-fluid rounded" alt="إعلان">
-                    </a>
+            <!-- Booking Instructions -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i> تعليمات الحجز</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> سيتم تأكيد الحجز بعد سداد الرسوم</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> يمكنك إلغاء الحجز قبل 24 ساعة من الموعد</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> سيتم إرسال رسالة تأكيد عبر البريد الإلكتروني</li>
+                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> يمكنك إدارة حجوزاتك من لوحة التحكم</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
-    {% endif %}
 </div>
 
 <style>
-    .booking-form button:hover {
-        background-color: #28a745;
-    }
-    .card:hover {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
+.slot-card { transition: all 0.3s ease; cursor: pointer; }
+.slot-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.day-filter { min-width: 60px; }
+.date-slots { display: none; }
+.date-slots.active { display: block; }
+.consultant-info i { width: 20px; text-align: center; }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dayFilters = document.querySelectorAll('.day-filter');
+    const dateSlots = document.querySelectorAll('.date-slots');
+    let activeDate = '{{ selected_date|date:"Y-m-d" }}' || new Date().toISOString().split('T')[0];
+
+    function updateSlots() {
+        dateSlots.forEach(slot => {
+            slot.classList.toggle('active', slot.dataset.date === activeDate);
+        });
+        dayFilters.forEach(filter => {
+            filter.classList.toggle('active', filter.dataset.date === activeDate);
+        });
+    }
+
+    dayFilters.forEach(filter => {
+        filter.addEventListener('click', function() {
+            activeDate = this.dataset.date;
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('date', activeDate);
+            window.history.pushState({}, '', newUrl);
+            updateSlots();
+        });
+    });
+
+    document.getElementById('prev-week').addEventListener('click', function() {
+        const currentDate = new Date(activeDate);
+        currentDate.setDate(currentDate.getDate() - 7);
+        activeDate = currentDate.toISOString().split('T')[0];
+        window.location.href = '?date=' + activeDate;
+    });
+
+    document.getElementById('next-week').addEventListener('click', function() {
+        const currentDate = new Date(activeDate);
+        currentDate.setDate(currentDate.getDate() + 7);
+        activeDate = currentDate.toISOString().split('T')[0];
+        window.location.href = '?date=' + activeDate;
+    });
+
+    updateSlots();
+});
+</script>
 {% endblock %}
