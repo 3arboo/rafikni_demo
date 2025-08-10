@@ -152,26 +152,25 @@ class ConsultationSlot(models.Model):
         return f"{self.provider.username} - {self.start_time}"
 
 class Consultation(models.Model):
-    class Status(models.TextChoices):
-        PENDING = 'pending', _('قيد الانتظار')
-        CONFIRMED = 'confirmed', _('تم التأكيد')
-        COMPLETED = 'completed', _('منتهية')
-        CANCELLED = 'cancelled', _('ملغاة')
-    
-    slot = models.OneToOneField(ConsultationSlot, on_delete=models.PROTECT)
-    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_consultations')
-    service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    notes = models.TextField(blank=True)
-    status = models.CharField(
-        max_length=20,
-        choices=Status.choices,
-        default=Status.PENDING
+    STATUS_CHOICES = (
+        ('pending', 'قيد الانتظار'),
+        ('accepted', 'مقبول'),
+        ('rejected', 'مرفوض'),
+        ('completed', 'مكتمل'),
     )
+    
+    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_consultations')
+    consultant = models.ForeignKey(Consultant, on_delete=models.CASCADE, related_name='consultations')
+    slot = models.ForeignKey(ConsultationSlot, on_delete=models.SET_NULL, null=True, blank=True)
+    question = models.TextField()
+    response = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    
     def save(self, *args, **kwargs):
-        if self.status == self.Status.CONFIRMED:
+        if self.status == self.status.accepted:
             self.slot.is_booked = True
             self.slot.save()
         super().save(*args, **kwargs)

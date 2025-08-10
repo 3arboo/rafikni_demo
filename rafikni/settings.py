@@ -104,14 +104,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rafikni.wsgi.application'
 
-DATABASE_URL = "postgresql://rf_rxr1_user:FDQ9Py9jrfq0Wds1XXkWygxSOxalOYlM@dpg-d2b4mv0gjchc73eu58mg-a/rf_rxr1"
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+#DATABASE_URL = "postgresql://rf_rxr1_user:FDQ9Py9jrfq0Wds1XXkWygxSOxalOYlM@dpg-d2b4mv0gjchc73eu58mg-a/rf_rxr1"
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 

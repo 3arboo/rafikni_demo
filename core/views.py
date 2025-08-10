@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required 
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Count, Avg
@@ -438,24 +439,71 @@ def browse_consultants(request):
     })
 
 
+@require_POST
+@login_required
+def book_consultation(request, slot_id):
+    try:
+        # الحصول على الموعد المطلوب
+        slot = get_object_or_404(ConsultationSlot, id=slot_id, is_booked=False)
+        
+        # التحقق من أن المستخدم ليس هو مقدم الخدمة
+        if slot.provider == request.user:
+            messages.error(request, 'لا يمكنك حجز موعد مع نفسك')
+            return redirect('consultant_detail', pk=slot.provider.consultant.pk)
+        
+        # التحقق من أن الموعد لم ينته بعد
+        if slot.start_time < timezone.now():
+            messages.error(request, 'هذا الموعد قد انتهى')
+            return redirect('consultant_detail', pk=slot.provider.consultant.pk)
+        
+        # حجز الموعد
+        slot.is_booked = True
+        slot.save()
+        
+        # إنشاء استشارة جديدة
+        consultation = Consultation.objects.create(
+            client=request.user,
+            consultant=slot.provider.consultant,
+            slot=slot,
+            status='pending',
+            question="تم الحجز عبر الموقع"  # يمكن تغيير هذا النص
+        )
+        
+        messages.success(request, 'تم حجز الموعد بنجاح! سيتواصل معك المستشار قريباً.')
+        return redirect('consultation_detail', pk=consultation.id)
+    
+    except Exception as e:
+        messages.error(request, f'حدث خطأ أثناء الحجز: {str(e)}')
+        return redirect('home')
+
 
 def consultant_detail(request, pk):
     consultant = get_object_or_404(Consultant, pk=pk, available=True)
     services = Service.objects.filter(provider=consultant.user, is_active=True)
     reviews = Review.objects.filter(service__provider=consultant.user).order_by('-created_at')
+    
+    # تحديد التاريخ المختار
+    selected_date = request.GET.get('date', timezone.now().date().isoformat())
+    try:
+        selected_date = timezone.datetime.strptime(selected_date, '%Y-%m-%d').date()
+    except ValueError:
+        selected_date = timezone.now().date()
+    
+    # الحصول على المواعيد المتاحة للتاريخ المحدد
     available_slots = ConsultationSlot.objects.filter(
         provider=consultant.user,
         is_booked=False,
+        start_time__date=selected_date,
         start_time__gte=timezone.now()
     ).order_by('start_time')
     
-    # Calculate average rating
+    # حساب متوسط التقييم
     avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
     
-    # Calculate reviews count
+    # حساب عدد التقييمات
     reviews_count = reviews.count()
     
-    # Handle user review
+    # معالجة تقييم المستخدم
     user_review = None
     if request.user.is_authenticated:
         user_review = reviews.filter(reviewer=request.user).first()
@@ -476,22 +524,14 @@ def consultant_detail(request, pk):
     else:
         form = ReviewForm(instance=user_review)
     
-    # Generate week dates
-    selected_date = request.GET.get('date', timezone.now().date().isoformat())
-    try:
-        selected_date = timezone.datetime.strptime(selected_date, '%Y-%m-%d').date()
-    except ValueError:
-        selected_date = timezone.now().date()
+    # توليد تواريخ الأسبوع
+    week_dates = [selected_date + timedelta(days=i) for i in range(-3, 4)]
     
-    # Calculate the start of the week (assuming week starts on Sunday)
-    start_of_week = selected_date - timedelta(days=selected_date.weekday() + 1)
-    week_dates = [start_of_week + timedelta(days=i) for i in range(7)]
-    
-    # Add consultant-specific attributes to context
+    # إضافة سمات خاصة بالمستشار للسياق
     consultant.average_rating = round(avg_rating, 1)
     consultant.reviews_count = reviews_count
     
-    # Active ads
+    # الإعلانات النشطة
     active_ads = Advertisement.objects.filter(
         is_active=True,
         start_date__lte=timezone.now().date(),
@@ -716,12 +756,20 @@ def consultation_list(request):
 
 @login_required
 def consultation_detail(request, pk):
-    consultation = get_object_or_404(ConsultationRequest, pk=pk)
+    consultation = get_object_or_404(Consultation, pk=pk)
     
-    # التحقق من صلاحيات الوصول
-    if request.user not in [consultation.client, consultation.consultant]:
-        messages.error(request, 'ليس لديك صلاحية لعرض هذه الاستشارة.')
-        return redirect('dashboard')
+    # التحقق من أن المستخدم له صلاحية رؤية الاستشارة
+    if request.user != consultation.client and request.user != consultation.consultant.user:
+        messages.error(request, 'ليس لديك صلاحية لعرض هذه الاستشارة')
+        return redirect('home')
+    
+    # معالجة رد المستشار
+    if request.method == 'POST' and 'response' in request.POST and request.user == consultation.consultant.user:
+        consultation.response = request.POST.get('response')
+        consultation.status = 'completed'
+        consultation.save()
+        messages.success(request, 'تم إرسال الرد بنجاح!')
+        return redirect('consultation_detail', pk=pk)
     
     return render(request, 'consultations/detail.html', {
         'consultation': consultation
@@ -848,3 +896,20 @@ def edit_consultant(request):
         form = ConsultantForm(instance=consultant, initial=initial_data, request=request)
     
     return render(request, 'consultants/edit.html', {'form': form})
+
+@require_POST
+@login_required
+def cancel_consultation(request, pk):
+    consultation = get_object_or_404(Consultation, pk=pk, client=request.user, status='pending')
+    
+    # تحرير الموعد
+    if consultation.slot:
+        consultation.slot.is_booked = False
+        consultation.slot.save()
+    
+    # إلغاء الاستشارة
+    consultation.status = 'cancelled'
+    consultation.save()
+    
+    messages.success(request, 'تم إلغاء الاستشارة بنجاح')
+    return redirect('client_dashboard')

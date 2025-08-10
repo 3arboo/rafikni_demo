@@ -16,7 +16,7 @@
                 </div>
                 
                 <div class="card-body">
-                    <!-- Consultation Info -->
+                    <!-- معلومات الاستشارة -->
                     <div class="mb-4">
                         <div class="row">
                             <div class="col-md-6">
@@ -31,7 +31,7 @@
                                     <i class="fas fa-user-tie me-2"></i>
                                     المستشار:
                                 </h5>
-                                <p>{{ consultation.consultant.username }}</p>
+                                <p>{{ consultation.consultant.user.username }}</p>
                             </div>
                         </div>
                         
@@ -57,9 +57,25 @@
                                 </span>
                             </div>
                         </div>
+                        
+                        {% if consultation.slot %}
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-clock me-2"></i>
+                                    الموعد:
+                                </h5>
+                                <p>
+                                    {{ consultation.slot.start_time|date:"Y/m/d" }}
+                                    من {{ consultation.slot.start_time|time }} 
+                                    إلى {{ consultation.slot.end_time|time }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
 
-                    <!-- Question Section -->
+                    <!-- السؤال -->
                     <div class="mb-4 p-3 bg-light rounded">
                         <h5 class="text-primary">
                             <i class="fas fa-question-circle me-2"></i>
@@ -68,7 +84,7 @@
                         <p>{{ consultation.question }}</p>
                     </div>
 
-                    <!-- Response Section (if exists) -->
+                    <!-- الرد -->
                     {% if consultation.response %}
                     <div class="mb-4 p-3 bg-light rounded">
                         <h5 class="text-primary">
@@ -82,18 +98,39 @@
                         </small>
                         {% endif %}
                     </div>
+                    {% elif request.user == consultation.consultant.user %}
+                    <div class="mb-4 p-3 border rounded">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-edit me-2"></i>
+                            الرد على الاستشارة
+                        </h5>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="response" value="true">
+                            <div class="mb-3">
+                                <textarea name="response_text" class="form-control" rows="5" 
+                                          placeholder="اكتب ردك هنا..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i> إرسال الرد
+                            </button>
+                        </form>
+                    </div>
                     {% endif %}
 
-                    <!-- Actions -->
+                    <!-- الإجراءات -->
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="{% url 'consultation_list' %}" class="btn btn-outline-secondary">
+                        <a href="{% if request.user.is_consultant %}{% url 'consultant_dashboard' %}{% else %}{% url 'client_dashboard' %}{% endif %}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i> رجوع
                         </a>
                         
-                        {% if request.user == consultation.consultant and consultation.status != 'completed' %}
-                        <a href="{% url 'respond_consultation' consultation.id %}" class="btn btn-primary">
-                            <i class="fas fa-reply me-2"></i> الرد على الاستشارة
-                        </a>
+                        {% if request.user == consultation.client and consultation.status == 'pending' %}
+                        <form method="post" action="{% url 'cancel_consultation' consultation.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times-circle me-2"></i> إلغاء الاستشارة
+                            </button>
+                        </form>
                         {% endif %}
                     </div>
                 </div>
