@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import (
     User, Profile, Service, ConsultationSlot,
-    Document, Review, ConsultationRequest , Service , Consultation
+    Document, Review, ConsultationRequest , Service , Consultation , Consultant
 )
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -247,4 +247,30 @@ class BookSlotForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'أي ملاحظات أو تفاصيل إضافية تريد مشاركتها مع المستشار'
             })
+        }
+
+# forms.py
+class ConsultantForm(forms.ModelForm):
+    # الحقول الإضافية (ليست جزءًا من الموديل)
+    title = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    session_duration = forms.IntegerField(
+        min_value=15,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    session_price = forms.DecimalField(
+        min_value=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': 0.01})
+    )
+    working_hours = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 10})
+    )
+
+    class Meta:
+        model = Consultant
+        fields = ['bio', 'categories']  # الحقول الموجودة فعلياً في الموديل
+        widgets = {
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+            'categories': forms.SelectMultiple(attrs={'class': 'form-select'}),
         }

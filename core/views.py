@@ -13,7 +13,7 @@ from .models import (
 from .forms import (
     UserRegistrationForm, UserLoginForm,
     ProfileForm, ServiceForm, ConsultationSlotForm,
-    DocumentForm, ReviewForm, ConsultationRequestForm 
+    DocumentForm, ReviewForm, ConsultationRequestForm  ,ConsultantForm
 )
 from django.utils.text import slugify
 import uuid
@@ -825,3 +825,37 @@ def book_slot(request, slot_id):
     except ConsultationSlot.DoesNotExist:
         messages.error(request, 'الموعد غير موجود.')
         return redirect('available_slots')
+
+
+@login_required
+def edit_consultant(request):
+    consultant = get_object_or_404(Consultant, user=request.user)
+    
+    if request.method == 'POST':
+        form = ConsultantForm(request.POST, instance=consultant)
+        
+        if form.is_valid():
+            # حفظ بيانات الموديل الأساسية
+            consultant = form.save()
+            
+            # معالجة الحقول الإضافية (يمكنك تخزينها كما تريد)
+            title = form.cleaned_data['title']
+            session_duration = form.cleaned_data['session_duration']
+            session_price = form.cleaned_data['session_price']
+            working_hours = form.cleaned_data['working_hours']
+            
+            # مثال: حفظ في جلسة المستخدم (يمكنك التعديل حسب حاجتك)
+            request.session['consultant_extra_data'] = {
+                'title': title,
+                'session_duration': session_duration,
+                'session_price': session_price,
+                'working_hours': working_hours
+            }
+            
+            return redirect('provider_profile')
+    else:
+        # تحميل القيم الأولية من الجلسة إن وجدت
+        initial_data = request.session.get('consultant_extra_data', {})
+        form = ConsultantForm(instance=consultant, initial=initial_data)
+    
+    return render(request, 'consultants/edit.html', {'form': form})

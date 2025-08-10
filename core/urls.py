@@ -33,7 +33,7 @@ urlpatterns = [
     path('consultant/<int:pk>/', views.consultant_detail, name='consultant_detail'),
     path('consultant/<int:consultant_id>/request/', views.request_consultation, name='request_consultation'),
     path('book/<int:slot_id>/', views.book_consultation, name='book_consultation'),
-    
+    path('consultant/edit/', views.edit_consultant, name='edit_consultant'),
     # Document Management URLs
     path('documents/', views.document_list, name='document_list'),
     path('documents/upload/', views.upload_document, name='upload_document'),
