@@ -4,267 +4,477 @@
 {% block title %}لوحة تحكم العميل - RaFiKNi{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>لوحة تحكم العميل</h2>
-        <form method="post" action="{% url 'switch_role' %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-outline-primary">
-                <i class="fas fa-sync-alt me-2"></i> التبديل إلى مقدم خدمة
-            </button>
-        </form>
-    </div>
-
+<div class="container-fluid py-4">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-3">
-            <div class="card mb-4">
-                <div class="card-body text-center">
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky pt-3">
+                <!-- Profile Section -->
+                <div class="text-center mb-4 p-3 bg-white rounded shadow-sm">
                     <img src="{% if user.profile.profile_image %}{{ user.profile.profile_image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
-                         class="rounded-circle mb-3" width="120" height="120" alt="صورة الملف الشخصي">
+                         class="rounded-circle mb-3 border border-3 border-primary" 
+                         width="120" height="120" alt="صورة الملف الشخصي">
                     <h5 class="mb-1">{{ user.full_name }}</h5>
-                    <p class="text-muted mb-3">عميل</p>
-                    <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary btn-sm">
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-user me-1"></i> عميل
+                    </p>
+                    <a href="{% url 'edit_profile' %}" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-edit me-1"></i> تعديل الملف
                     </a>
                 </div>
-            </div>
 
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <i class="fas fa-bars me-2"></i> القائمة
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
-                        <i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم
-                    </a>
-                    <a href="{% url 'browse_services' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-concierge-bell me-2"></i> تصفح الخدمات
-                    </a>
-                    <a href="{% url 'my_bookings' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-calendar-check me-2"></i> حجوزاتي
-                    </a>
-                    <a href="{% url 'consultation_list' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-comments me-2"></i> استشاراتي
-                    </a>
-                    <a href="{% url 'document_list' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-file-contract me-2"></i> وثائقي
-                    </a>
-                    <a href="{% url 'notifications' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-bell me-2"></i> الإشعارات
-                    </a>
-                    <a href="{% url 'faq_list' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-question-circle me-2"></i> الأسئلة الشائعة
-                    </a>
-                </div>
+                <!-- Navigation Menu -->
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'service_list' %}">
+                            <i class="fas fa-concierge-bell me-2"></i> تصفح الخدمات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'my_bookings' %}">
+                            <i class="fas fa-calendar-check me-2"></i> حجوزاتي
+                            {% if active_bookings > 0 %}
+                            <span class="badge bg-primary rounded-pill float-start">{{ active_bookings }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'consultation_list' %}">
+                            <i class="fas fa-comments me-2"></i> استشاراتي
+                            {% if active_consultations > 0 %}
+                            <span class="badge bg-primary rounded-pill float-start">{{ active_consultations }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'document_list' %}">
+                            <i class="fas fa-file-contract me-2"></i> وثائقي
+                            {% if documents_count > 0 %}
+                            <span class="badge bg-primary rounded-pill float-start">{{ documents_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'notifications' %}">
+                            <i class="fas fa-bell me-2"></i> الإشعارات
+                            {% if unread_notifications > 0 %}
+                            <span class="badge bg-danger rounded-pill float-start">{{ unread_notifications }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'faq_list' %}">
+                            <i class="fas fa-question-circle me-2"></i> الأسئلة الشائعة
+                        </a>
+                    </li>
+                    <li class="nav-item mt-3">
+                        <form method="post" action="{% url 'switch_role' %}" class="d-grid">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-sync-alt me-2"></i> التبديل إلى مقدم خدمة
+                            </button>
+                        </form>
+                    </li>
+                </ul>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="col-md-9">
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">لوحة تحكم العميل</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{% url 'service_list' %}" class="btn btn-sm btn-primary me-2">
+                        <i class="fas fa-plus me-1"></i> حجز خدمة
+                    </a>
+                    <a href="{% url 'consultants_list' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-user-tie me-1"></i> البحث عن مستشار
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
             <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white text-center py-3">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start-primary shadow h-100 py-2">
                         <div class="card-body">
-                            <h3 class="mb-0">{{ active_consultations }}</h3>
-                            <p class="mb-0">استشارات نشطة</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-success text-white text-center py-3">
-                        <div class="card-body">
-                            <h3 class="mb-0">{{ active_bookings }}</h3>
-                            <p class="mb-0">حجوزات نشطة</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-warning text-white text-center py-3">
-                        <div class="card-body">
-                            <h3 class="mb-0">{{ documents_count }}</h3>
-                            <p class="mb-0">وثائق محفوظة</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-info text-white text-center py-3">
-                        <div class="card-body">
-                            <h3 class="mb-0">{{ unread_notifications }}</h3>
-                            <p class="mb-0">إشعارات جديدة</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- قسم الحجوزات -->
-            <div class="card mb-4">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">حجوزاتي القادمة</h5>
-                    <div>
-                        <a href="{% url 'my_bookings' %}" class="btn btn-sm btn-outline-primary me-2">
-                            عرض الكل <i class="fas fa-arrow-left"></i>
-                        </a>
-                        <a href="{% url 'browse_services' %}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-plus me-1"></i> حجز جديد
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    {% if upcoming_bookings %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>الخدمة</th>
-                                    <th>مقدم الخدمة</th>
-                                    <th>التاريخ</th>
-                                    <th>الحالة</th>
-                                    <th>الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for booking in upcoming_bookings %}
-                                <tr>
-                                    <td>
-                                        <a href="{% url 'service_detail' booking.service.slug %}">{{ booking.service.title }}</a>
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'consultant_detail' booking.service.provider.consultant.id %}">
-                                            {{ booking.service.provider.full_name }}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        {% if booking.slot %}
-                                            {{ booking.slot.start_time|date:"d/m/Y - H:i" }}
-                                        {% else %}
-                                            غير محدد
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-{% if booking.status == 'confirmed' %}success
-                                            {% elif booking.status == 'pending' %}warning
-                                            {% elif booking.status == 'cancelled' %}danger
-                                            {% else %}secondary{% endif %}">
-                                            {{ booking.get_status_display }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline-primary" title="التفاصيل">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            {% if booking.status == 'pending' or booking.status == 'confirmed' %}
-                                            <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-outline-danger" title="إلغاء الحجز">
-                                                <i class="fas fa-times"></i>
-                                            </a>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info text-center py-3">
-                        <i class="fas fa-calendar-times fa-2x mb-2"></i>
-                        <p class="mb-0">لا توجد حجوزات قادمة</p>
-                        <a href="{% url 'browse_services' %}" class="btn btn-primary mt-2">
-                            <i class="fas fa-plus me-1"></i> احجز خدمة الآن
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- قسم الاستشارات -->
-            <div class="card mb-4">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">استشاراتي القادمة</h5>
-                    <a href="{% url 'consultation_list' %}" class="btn btn-sm btn-outline-primary">
-                        عرض الكل <i class="fas fa-arrow-left"></i>
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if upcoming_consultations %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>الخدمة</th>
-                                    <th>مقدم الخدمة</th>
-                                    <th>التاريخ</th>
-                                    <th>الحالة</th>
-                                    <th>الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for consultation in upcoming_consultations %}
-                                <tr>
-                                    <td>{{ consultation.service.title }}</td>
-                                    <td>{{ consultation.slot.provider.username }}</td>
-                                    <td>{{ consultation.slot.start_time|date:"d/m/Y - H:i" }}</td>
-                                    <td>
-                                        <span class="badge bg-{% if consultation.status == 'confirmed' %}success{% else %}warning{% endif %}">
-                                            {{ consultation.get_status_display }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'consultation_detail' consultation.id %}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info text-center py-3">
-                        <i class="fas fa-calendar-check fa-2x mb-2"></i>
-                        <p class="mb-0">لا توجد استشارات قادمة</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- قسم الوثائق -->
-            <div class="card">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">وثائقي المهمة</h5>
-                    <a href="{% url 'document_list' %}" class="btn btn-sm btn-outline-primary">
-                        عرض الكل <i class="fas fa-arrow-left"></i>
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if important_documents %}
-                    <div class="list-group">
-                        {% for doc in important_documents %}
-                        <a href="{% url 'document_list' %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ doc.title }}</h6>
-                                {% if doc.reminder_date %}
-                                <small class="text-{% if doc.is_urgent %}danger{% else %}success{% endif %}">
-                                    {{ doc.reminder_days }} أيام متبقية
-                                </small>
-                                {% endif %}
+                            <div class="row no-gutters align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                                        استشارات نشطة</div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">{{ active_consultations }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-comments fa-2x text-gray-300"></i>
+                                </div>
                             </div>
-                            <small class="text-muted">
-                                تاريخ التذكير: {{ doc.reminder_date|date:"d/m/Y" }}
-                            </small>
-                        </a>
-                        {% endfor %}
+                        </div>
                     </div>
-                    {% else %}
-                    <div class="alert alert-info text-center py-3">
-                        <i class="fas fa-file-alt fa-2x mb-2"></i>
-                        <p class="mb-0">لا توجد وثائق مهمة</p>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                        حجوزات نشطة</div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">{{ active_bookings }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    {% endif %}
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                                        وثائق محفوظة</div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">{{ documents_count }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-file-contract fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-xs fw-bold text-info text-uppercase mb-1">
+                                        إشعارات جديدة</div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">{{ unread_notifications }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-bell fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Content Row -->
+            <div class="row">
+                <!-- Upcoming Bookings -->
+                <div class="col-xl-6 col-lg-12 mb-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 fw-bold text-primary">حجوزاتي القادمة</h6>
+                            <a href="{% url 'my_bookings' %}" class="btn btn-sm btn-outline-primary">
+                                عرض الكل <i class="fas fa-arrow-left ms-1"></i>
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if upcoming_bookings %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>الخدمة</th>
+                                            <th>التاريخ</th>
+                                            <th>الحالة</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for booking in upcoming_bookings %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'service_detail' booking.service.slug %}" class="text-decoration-none">
+                                                    {{ booking.service.title|truncatechars:20 }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                {% if booking.slot %}
+                                                    {{ booking.slot.start_time|date:"d/m/Y" }}
+                                                    <br><small>{{ booking.slot.start_time|time:"H:i" }}</small>
+                                                {% else %}
+                                                    غير محدد
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ booking.status_color }}">
+                                                    {{ booking.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline-primary" title="التفاصيل">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                                                    <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-outline-danger" title="إلغاء الحجز">
+                                                        <i class="fas fa-times"></i>
+                                                    </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <p class="mb-0">لا توجد حجوزات قادمة</p>
+                                <a href="{% url 'service_list' %}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-plus me-1"></i> احجز خدمة الآن
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Consultations -->
+                <div class="col-xl-6 col-lg-12 mb-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 fw-bold text-primary">استشاراتي القادمة</h6>
+                            <a href="{% url 'consultation_list' %}" class="btn btn-sm btn-outline-primary">
+                                عرض الكل <i class="fas fa-arrow-left ms-1"></i>
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if upcoming_consultations %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>المستشار</th>
+                                            <th>التاريخ</th>
+                                            <th>الحالة</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for consultation in upcoming_consultations %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'consultant_detail' consultation.slot.provider.consultant.id %}" class="text-decoration-none">
+                                                    {{ consultation.slot.provider.full_name|truncatechars:20 }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                {{ consultation.slot.start_time|date:"d/m/Y" }}
+                                                <br><small>{{ consultation.slot.start_time|time:"H:i" }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ consultation.status_color }}">
+                                                    {{ consultation.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'consultation_detail' consultation.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                                <p class="mb-0">لا توجد استشارات قادمة</p>
+                                <a href="{% url 'consultants_list' %}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-plus me-1"></i> احجز استشارة الآن
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Row -->
+            <div class="row">
+                <!-- Important Documents -->
+                <div class="col-xl-6 col-lg-12 mb-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 fw-bold text-primary">وثائقي المهمة</h6>
+                            <a href="{% url 'document_list' %}" class="btn btn-sm btn-outline-primary">
+                                عرض الكل <i class="fas fa-arrow-left ms-1"></i>
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if important_documents %}
+                            <div class="list-group list-group-flush">
+                                {% for doc in important_documents %}
+                                <a href="{% url 'document_list' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ doc.title }}</h6>
+                                            <small class="text-muted">
+                                                تاريخ التذكير: {{ doc.reminder_date|date:"d/m/Y" }}
+                                            </small>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-{% if doc.is_urgent %}danger{% else %}warning{% endif %}">
+                                                {% if doc.reminder_days > 0 %}
+                                                    {{ doc.reminder_days }} أيام متبقية
+                                                {% else %}
+                                                    اليوم
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                <p class="mb-0">لا توجد وثائق مهمة</p>
+                                <a href="{% url 'upload_document' %}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-upload me-1"></i> رفع وثيقة
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Notifications -->
+                <div class="col-xl-6 col-lg-12 mb-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 fw-bold text-primary">آخر الإشعارات</h6>
+                            <a href="{% url 'notifications' %}" class="btn btn-sm btn-outline-primary">
+                                عرض الكل <i class="fas fa-arrow-left ms-1"></i>
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_notifications %}
+                            <div class="list-group list-group-flush">
+                                {% for notification in recent_notifications %}
+                                <a href="{% if notification.link %}{{ notification.link }}{% else %}#{% endif %}" 
+                                   class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-1">{{ notification.message|truncatechars:40 }}</h6>
+                                        {% if not notification.is_read %}
+                                        <span class="badge bg-danger">جديد</span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ notification.created_at|timesince }}</small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                                <p class="mb-0">لا توجد إشعارات جديدة</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 </div>
+
+<style>
+    .sidebar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .sidebar .nav-link {
+        font-weight: 500;
+        color: #333;
+        padding: 0.75rem 1rem;
+        border-radius: 0.25rem;
+        margin-bottom: 0.25rem;
+        transition: all 0.3s;
+    }
+    
+    .sidebar .nav-link.active {
+        color: #fff;
+        background-color: var(--primary);
+    }
+    
+    .sidebar .nav-link:hover:not(.active) {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .border-start-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    
+    .border-start-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    
+    .border-start-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    
+    .border-start-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        transition: all 0.3s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+    
+    .list-group-item {
+        transition: all 0.3s;
+    }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add active class to current nav link
+    const currentUrl = window.location.pathname;
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentUrl) {
+            link.classList.add('active');
+        }
+    });
+    
+    // Add tooltips to buttons
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
 {% endblock %}
