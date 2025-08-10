@@ -84,12 +84,12 @@
                 <div class="card consultant-card">
                     <div class="consultant-img-container">
                         {% if consultant.profile_image %}
-                        <img src="{{ consultant.profile_image.url }}" class="consultant-img" alt="{{ consultant.user.username }}">
+                        <img src="{{ consultant.profile_image.url }}" class="consultant-img" alt="{{ consultant.user.full_name }}">
                         {% else %}
                         <i class="fas fa-user-tie fa-4x text-secondary"></i>
                         {% endif %}
                         <div class="consultant-name-overlay">
-                            <h5 class="mb-0">{{ consultant.user.get_full_name }}</h5>
+                            <h5 class="mb-0">{{ consultant.user.full_name}}</h5>
                         </div>
                     </div>
                     <div class="card-body">

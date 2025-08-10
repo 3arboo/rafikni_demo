@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+from cloudinary_storage.storage import MediaCloudinaryStorage
 from pathlib import Path
 import os
 import dj_database_url
@@ -45,12 +45,28 @@ INSTALLED_APPS = [
     'users',
     'cloudinary',
     'cloudinary_storage',
-]
 
+]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-CLOUDINARY_URL="cloudinary://<your_api_key>:<your_api_secret>@dveruhd7x"
+#CLOUDINARY_URL="cloudinary://588663173999688:kDBEisifOzLTHsGyRtnJlq6hpHQ@dveruhd7x"
+#DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+#CLOUDINARY_STORAGE = {
+   # 'CLOUD_NAME': 'dveruhd7x',
+   # 'API_KEY': '588663173999688',
+ #   'API_SECRET': 'kDBEisifOzLTHsGyRtnJlq6hpHQ',
+#}
+
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MIDDLEWARE = [
@@ -62,6 +78,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.Custom404Middleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 
 ]
 
@@ -174,4 +191,9 @@ CSRF_TRUSTED_ORIGINS = ['https://rafikni.onrender.com']
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
 

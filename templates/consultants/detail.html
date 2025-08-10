@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ consultant.user.full_name }} - RaFiKNi{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <!-- Consultant Profile Card -->
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-body text-center">
+                    <img src="{{ consultant.user.profile.profile_image.url|default:'/static/images/default-profile.jpg' }}" 
+                         class="rounded-circle mb-3" width="150" height="150" 
+                         style="object-fit: cover; border: 3px solid var(--primary);">
+                    <h3>{{ consultant.user.full_name }}</h3>
+                    <h5 class="text-primary mb-3">{{ consultant.title }}</h5>
+                    
+                    <div class="rating mb-3">
+                        <span class="text-warning h4">
+                            <i class="fas fa-star"></i>
+                            {{ consultant.avg_rating|default:"0"|floatformat:1 }}
+                        </span>
+                        <small class="text-muted">({{ consultant.review_count }} تقييمات)</small>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        {% for category in consultant.categories.all|slice:":3" %}
+                        <span class="badge bg-primary">{{ category.name }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <p class="text-muted mb-4">
+                        <i class="fas fa-clock me-2"></i>
+                        متاح من {{ consultant.available_from|time:"g:i A" }} إلى {{ consultant.available_to|time:"g:i A" }}
+                    </p>
+                    
+                    <a href="#consultation-form" class="btn btn-primary btn-lg w-100 mb-3">
+                        <i class="fas fa-calendar-check me-2"></i> حجز استشارة
+                    </a>
+                    
+                    <div class="d-flex justify-content-center gap-3">
+                        {% if consultant.user.profile.website %}
+                        <a href="{{ consultant.user.profile.website }}" target="_blank" class="text-secondary">
+                            <i class="fas fa-globe fa-lg"></i>
+                        </a>
+                        {% endif %}
+                        {% if consultant.user.profile.linkedin %}
+                        <a href="{{ consultant.user.profile.linkedin }}" target="_blank" class="text-secondary">
+                            <i class="fab fa-linkedin fa-lg"></i>
+                        </a>
+                        {% endif %}
+                        {% if consultant.user.profile.twitter %}
+                        <a href="{{ consultant.user.profile.twitter }}" target="_blank" class="text-secondary">
+                            <i class="fab fa-twitter fa-lg"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar Ad -->
+            {% if active_ads %}
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <a href="{{ active_ads.0.link }}" target="_blank">
+                        <img src="{{ active_ads.0.image.url }}" class="img-fluid rounded" alt="إعلان">
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Consultant Details -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title border-bottom pb-3 mb-3">نبذة عن المستشار</h4>
+                    <p class="card-text">{{ consultant.bio|linebreaks }}</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-graduation-cap text-primary me-2"></i> المؤهلات العلمية</h5>
+                            <ul class="list-unstyled ms-4">
+                                {% for qualification in consultant.qualifications.all %}
+                                <li class="mb-2">
+                                    <i class="fas fa-circle text-primary" style="font-size: 8px; vertical-align: middle;"></i>
+                                    {{ qualification.degree }} في {{ qualification.field }}
+                                </li>
+                                {% empty %}
+                                <li class="text-muted">لا توجد مؤهلات مسجلة</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-briefcase text-primary me-2"></i> الخبرات العملية</h5>
+                            <ul class="list-unstyled ms-4">
+                                {% for experience in consultant.experiences.all %}
+                                <li class="mb-2">
+                                    <i class="fas fa-circle text-primary" style="font-size: 8px; vertical-align: middle;"></i>
+                                    {{ experience.position }} في {{ experience.company }}
+                                </li>
+                                {% empty %}
+                                <li class="text-muted">لا توجد خبرات مسجلة</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Available Slots -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title border-bottom pb-3 mb-3">المواعيد المتاحة</h4>
+                    
+                    {% if available_slots %}
+                    <div class="row">
+                        {% for slot in available_slots %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{{ slot.start_time|date:"l" }}</h5>
+                                    <p class="card-text">
+                                        {{ slot.start_time|date:"Y/m/d" }}<br>
+                                        {{ slot.start_time|time:"g:i A" }} - {{ slot.end_time|time:"g:i A" }}
+                                    </p>
+                                    <a href="{% url 'book_consultation' slot.id %}" class="btn btn-sm btn-outline-primary">
+                                        حجز الموعد
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info text-center">
+                        لا توجد مواعيد متاحة حالياً. يرجى المحاولة لاحقاً.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Consultation Request Form -->
+            <div class="card shadow-sm mb-4" id="consultation-form">
+                <div class="card-body">
+                    <h4 class="card-title border-bottom pb-3 mb-3">طلب استشارة</h4>
+                    <form method="post" action="{% url 'request_consultation' consultant.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="category" class="form-label">التخصص</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="" selected disabled>اختر تخصص الاستشارة</option>
+                                {% for category in consultant.categories.all %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="question" class="form-label">تفاصيل الاستشارة</label>
+                            <textarea class="form-control" id="question" name="question" rows="5" 
+                                      placeholder="صف استشارتك بالتفصيل..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i> إرسال الطلب
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Reviews Section -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title border-bottom pb-3 mb-3">تقييمات العملاء</h4>
+                    
+                    {% if reviews %}
+                    <div class="mb-4">
+                        {% for review in reviews %}
+                        <div class="mb-4 pb-3 border-bottom">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <strong>{{ review.reviewer.full_name }}</strong>
+                                    <span class="text-muted ms-2">{{ review.created_at|date:"Y/m/d" }}</span>
+                                </div>
+                                <div class="text-warning">
+                                    {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                    <i class="fas fa-star"></i>
+                                    {% else %}
+                                    <i class="far fa-star"></i>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <p>{{ review.comment }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info text-center">
+                        لا توجد تقييمات حتى الآن.
+                    </div>
+                    {% endif %}
+                    
+                    {% if user_review %}
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            تقييمك السابق
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div class="text-warning">
+                                    {% for i in "12345" %}
+                                    {% if forloop.counter <= user_review.rating %}
+                                    <i class="fas fa-star"></i>
+                                    {% else %}
+                                    <i class="far fa-star"></i>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="text-muted">{{ user_review.created_at|date:"Y/m/d" }}</span>
+                            </div>
+                            <p>{{ user_review.comment }}</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <form method="post" action="{% url 'consultant_detail' consultant.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="review" value="true">
+                        <div class="mb-3">
+                            <label class="form-label">تقييمك</label>
+                            <div class="rating-input mb-3">
+                                {% for i in "54321" %}
+                                <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
+                                <label for="star{{ i }}" class="text-warning" style="font-size: 1.5rem;">
+                                    <i class="far fa-star"></i>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">تعليقك</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-star me-2"></i> إرسال التقييم
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .rating-input input {
+        display: none;
+    }
+    .rating-input input:checked ~ label i,
+    .rating-input label:hover i,
+    .rating-input label:hover ~ label i {
+        font-weight: 900;
+    }
+    .sticky-top {
+        position: -webkit-sticky;
+        position: sticky;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Rating stars interaction
+    const stars = document.querySelectorAll('.rating-input label');
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const input = document.getElementById(this.htmlFor);
+            const value = input.value;
+            
+            // Update all stars up to the selected one
+            for (let i = 5; i >= 1; i--) {
+                const starLabel = document.querySelector(`label[for="star${i}"] i`);
+                if (i <= value) {
+                    starLabel.classList.add('fas');
+                    starLabel.classList.remove('far');
+                } else {
+                    starLabel.classList.add('far');
+                    starLabel.classList.remove('fas');
+                }
+            }
+        });
+    });
+    
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                window.scrollTo({
+                    top: target.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

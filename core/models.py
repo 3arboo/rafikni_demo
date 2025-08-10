@@ -110,6 +110,7 @@ class Service(models.Model):
             base_slug = slugify(self.title)
             unique_slug = f"{base_slug}-{uuid.uuid4().hex[:6]}"
             self.slug = unique_slug
+        self.is_active = True
         super().save(*args, **kwargs)
     
     def __str__(self):

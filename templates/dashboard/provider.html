@@ -4,152 +4,160 @@
 {% block title %}لوحة تحكم مقدم الخدمة - RaFiKNi{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>لوحة تحكم مقدم الخدمة</h2>
-        <form method="post" action="{% url 'switch_role' %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-outline-primary">
-                <i class="fas fa-sync-alt me-2"></i> التبديل إلى عميل
-            </button>
-        </form>
-    </div>
-
+<div class="container-fluid py-4">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-3">
-            <div class="card mb-4">
-                <div class="card-body text-center">
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky pt-3">
+                <!-- Profile Section -->
+                <div class="text-center mb-4 p-3 bg-white rounded shadow-sm">
                     <img src="{% if user.profile.profile_image %}{{ user.profile.profile_image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
-                         class="rounded-circle mb-3" width="120" height="120" alt="صورة الملف الشخصي">
+                         class="rounded-circle mb-3 border border-3 border-primary" 
+                         width="120" height="120" alt="صورة الملف الشخصي">
                     <h5 class="mb-1">{{ user.full_name }}</h5>
-                    <p class="text-muted mb-3">مقدم خدمة</p>
-                    <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary btn-sm">
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-briefcase me-1"></i> {{ user.consultant.title|default:"مستشار" }}
+                    </p>
+                    <a href="{% url 'edit_profile' %}" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-edit me-1"></i> تعديل الملف
                     </a>
                 </div>
-            </div>
 
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <i class="fas fa-bars me-2"></i> القائمة
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
-                        <i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم
-                    </a>
-                    <a href="{% url 'service_list' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-concierge-bell me-2"></i> خدماتي
-                    </a>
-                    <a href="{% url 'create_service' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-plus-circle me-2"></i> إضافة خدمة جديدة
-                    </a>
-                    <a href="{% url 'consultation_list' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-comments me-2"></i> استشاراتي
-                    </a>
-                    <a href="{% url 'slot_list' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-calendar-alt me-2"></i> المواعيد
-                    </a>
-                    <a href="{% url 'document_list' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-file-contract me-2"></i> الوثائق
-                    </a>
-                    <a href="{% url 'provider_profile' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-user-circle me-2"></i> الملف العام
-                    </a>
-                </div>
+                <!-- Navigation Menu -->
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'service_list' %}">
+                            <i class="fas fa-concierge-bell me-2"></i> خدماتي
+                            <span class="badge bg-primary rounded-pill float-start">{{ active_services }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'create_service' %}">
+                            <i class="fas fa-plus-circle me-2"></i> إضافة خدمة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'consultation_list' %}">
+                            <i class="fas fa-comments me-2"></i> الاستشارات
+                            {% if new_consultation_requests_count > 0 %}
+                            <span class="badge bg-danger rounded-pill float-start">{{ new_consultation_requests_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'slot_list' %}">
+                            <i class="fas fa-calendar-alt me-2"></i> المواعيد
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'document_list' %}">
+                            <i class="fas fa-file-contract me-2"></i> الوثائق
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'provider_profile' %}">
+                            <i class="fas fa-user-circle me-2"></i> الملف العام
+                        </a>
+                    </li>
+                    <li class="nav-item mt-3">
+                        <form method="post" action="{% url 'switch_role' %}" class="d-grid">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-sync-alt me-2"></i> التبديل إلى عميل
+                            </button>
+                        </form>
+                    </li>
+                </ul>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="col-md-9">
-            <!-- Quick Stats -->
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="card bg-primary text-white text-center py-3 position-relative card-hover">
-                        <div class="card-body">
-                            <h3 class="mb-0">{{ active_services }}</h3>
-                            <p class="mb-0">الخدمات النشطة</p>
-                        </div>
-                        <a href="{% url 'create_service' %}" class="quick-action-btn bg-white text-primary">
-                            <i class="fas fa-plus"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-success text-white text-center py-3 card-hover">
-                        <div class="card-body">
-                            <h3 class="mb-0">{{ monthly_consultations }}</h3>
-                            <p class="mb-0">استشارات الشهر</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-info text-white text-center py-3 card-hover">
-                        <div class="card-body">
-                            <h3 class="mb-0">{{ avg_rating|default:"0.0" }}/5</h3>
-                            <p class="mb-0">متوسط التقييمات</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Services Summary -->
-            <div class="card mb-4">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">ملخص الخدمات</h5>
-                    <div>
-                        <a href="{% url 'service_list' %}" class="btn btn-sm btn-outline-primary me-2">
-                            <i class="fas fa-list me-1"></i> عرض الكل
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">لوحة التحكم</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'create_slot' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus me-1"></i> موعد جديد
                         </a>
                         <a href="{% url 'create_service' %}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-plus me-1"></i> إضافة جديدة
+                            <i class="fas fa-plus me-1"></i> خدمة جديدة
                         </a>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3 mb-md-0">
-                            <div class="stat-card border-primary p-3 rounded">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
-                                        <i class="fas fa-check-circle text-primary fa-lg"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0">الخدمات النشطة</h6>
-                                        <p class="mb-0 fs-4 fw-bold">{{ active_services }}</p>
-                                    </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        الخدمات النشطة</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_services }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-concierge-bell fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4 mb-3 mb-md-0">
-                            <div class="stat-card border-success p-3 rounded">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-success bg-opacity-10 p-3 rounded me-3">
-                                        <i class="fas fa-star text-success fa-lg"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0">متوسط التقييم</h6>
-                                        <p class="mb-0 fs-4 fw-bold">{{ avg_rating|default:"0.0" }}/5</p>
-                                    </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        استشارات هذا الشهر</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ monthly_consultations }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-comments fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="stat-card border-info p-3 rounded">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-info bg-opacity-10 p-3 rounded me-3">
-                                        <i class="fas fa-clock text-info fa-lg"></i>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        متوسط التقييم</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ avg_rating|default:"0.0" }}/5
                                     </div>
-                                    <div>
-                                        <h6 class="mb-0">آخر إضافة</h6>
-                                        <p class="mb-0 fs-4 fw-bold">
-                                            {% if last_service_date %}
-                                                {{ last_service_date|date:"Y/m/d" }}
-                                            {% else %}
-                                                -
-                                            {% endif %}
-                                        </p>
-                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-star fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        معدل الحجوزات</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ booking_rate }}%</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
@@ -157,107 +165,142 @@
                 </div>
             </div>
 
-            <!-- Consultation Requests -->
-            <div class="card mb-4">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">طلبات الاستشارات الجديدة</h5>
-                    <a href="{% url 'consultation_list' %}" class="btn btn-sm btn-outline-primary">
-                        عرض الكل <i class="fas fa-arrow-left"></i>
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if new_consultation_requests %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>العميل</th>
-                                    <th>الخدمة</th>
-                                    <th>التاريخ</th>
-                                    <th>الحالة</th>
-                                    <th>الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for request in new_consultation_requests %}
-                                <tr>
-                                    <td>{{ request.client.username }}</td>
-                                    <td>{{ request.service.title|truncatechars:20 }}</td>
-                                    <td>{{ request.created_at|date:"d/m/Y - H:i" }}</td>
-                                    <td>
-                                        <span class="badge bg-warning">قيد الانتظار</span>
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'respond_consultation' request.id %}" class="btn btn-sm btn-outline-success me-1" title="الرد">
-                                            <i class="fas fa-check"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-sm btn-outline-danger" title="رفض">
-                                            <i class="fas fa-times"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info text-center py-3">
-                        <i class="fas fa-comments fa-2x mb-2"></i>
-                        <p class="mb-0">لا توجد طلبات استشارات جديدة</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Recent Reviews and Performance -->
+            <!-- Content Row -->
             <div class="row">
-                <div class="col-md-6">
-                    <div class="card mb-4">
-                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">آخر التقييمات</h5>
-                            <a href="#" class="btn btn-sm btn-outline-primary">
-                                عرض الكل <i class="fas fa-arrow-left"></i>
+                <!-- Consultation Requests -->
+                <div class="col-xl-6 col-lg-12 mb-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">طلبات الاستشارات الجديدة</h6>
+                            <a href="{% url 'consultation_list' %}" class="btn btn-sm btn-outline-primary">
+                                عرض الكل <i class="fas fa-arrow-left ms-1"></i>
                             </a>
                         </div>
                         <div class="card-body">
-                            {% if recent_reviews %}
-                                {% for review in recent_reviews %}
-                                <div class="d-flex mb-3 pb-3 border-bottom">
-                                    <div class="flex-shrink-0">
-                                        <img src="{% if review.reviewer.profile.profile_image %}{{ review.reviewer.profile.profile_image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
-                                             class="rounded-circle" width="50" height="50" alt="Client">
+                            {% if new_consultation_requests %}
+                            <div class="list-group list-group-flush">
+                                {% for request in new_consultation_requests %}
+                                <a href="{% url 'consultation_detail' request.id %}" 
+                                   class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ request.client.full_name }}</h6>
+                                        <small class="text-muted">{{ request.created_at|timesince }}</small>
                                     </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <div class="d-flex justify-content-between">
-                                            <h6 class="mb-0">{{ review.reviewer.username }}</h6>
-                                            <small class="text-muted">{{ review.created_at|date:"Y/m/d" }}</small>
-                                        </div>
-                                        <div class="text-warning mb-2">
-                                            {% for i in "12345" %}
-                                            {% if forloop.counter <= review.rating %}
-                                            <i class="fas fa-star"></i>
-                                            {% else %}
-                                            <i class="far fa-star"></i>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </div>
-                                        <p class="mb-0">{{ review.comment|truncatechars:80 }}</p>
-                                    </div>
-                                </div>
+                                    <p class="mb-1 text-truncate">{{ request.question|truncatechars:50 }}</p>
+                                    <small class="text-muted">{{ request.category.name }}</small>
+                                </a>
                                 {% endfor %}
+                            </div>
                             {% else %}
-                            <div class="alert alert-info text-center py-3">
-                                <i class="fas fa-star fa-2x mb-2"></i>
-                                <p class="mb-0">لا توجد تقييمات بعد</p>
+                            <div class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">لا توجد طلبات جديدة</p>
                             </div>
                             {% endif %}
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0">إحصائيات الأداء</h5>
+
+                <!-- Upcoming Appointments -->
+                <div class="col-xl-6 col-lg-12 mb-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">المواعيد القادمة</h6>
+                            <a href="{% url 'slot_list' %}" class="btn btn-sm btn-outline-primary">
+                                عرض الكل <i class="fas fa-arrow-left ms-1"></i>
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if upcoming_appointments %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>العميل</th>
+                                            <th>التاريخ</th>
+                                            <th>الوقت</th>
+                                            <th>الحالة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for appointment in upcoming_appointments %}
+                                        <tr>
+                                            <td>{{ appointment.client.full_name }}</td>
+                                            <td>{{ appointment.slot.start_time|date:"Y/m/d" }}</td>
+                                            <td>{{ appointment.slot.start_time|time:"g:i A" }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ appointment.status_color }}">
+                                                    {{ appointment.get_status_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">لا توجد مواعيد قادمة</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Row -->
+            <div class="row">
+                <!-- Recent Reviews -->
+                <div class="col-xl-6 col-lg-12 mb-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">أحدث التقييمات</h6>
+                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                عرض الكل <i class="fas fa-arrow-left ms-1"></i>
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_reviews %}
+                            <div class="list-group list-group-flush">
+                                {% for review in recent_reviews %}
+                                <div class="list-group-item">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <img src="{{ review.reviewer.profile.profile_image.url|default:'/static/images/default-profile.jpg' }}" 
+                                             class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
+                                        <div>
+                                            <h6 class="mb-0">{{ review.reviewer.full_name }}</h6>
+                                            <div class="text-warning small">
+                                                {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star"></i>
+                                                {% else %}
+                                                <i class="far fa-star"></i>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <small class="text-muted ms-auto">{{ review.created_at|timesince }}</small>
+                                    </div>
+                                    <p class="mb-0">{{ review.comment }}</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">لا توجد تقييمات حديثة</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="col-xl-6 col-lg-12 mb-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">مؤشرات الأداء</h6>
                         </div>
                         <div class="card-body">
                             <div class="mb-4">
@@ -296,43 +339,85 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 </div>
 
 <style>
-    .card-hover:hover {
+    .sidebar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .sidebar .nav-link {
+        font-weight: 500;
+        color: #333;
+        padding: 0.75rem 1rem;
+        border-radius: 0.25rem;
+        margin-bottom: 0.25rem;
+        transition: all 0.3s;
+    }
+    
+    .sidebar .nav-link.active {
+        color: #fff;
+        background-color: var(--primary);
+    }
+    
+    .sidebar .nav-link:hover:not(.active) {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .border-start-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    
+    .border-start-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    
+    .border-start-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    
+    .border-start-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        transition: all 0.3s;
+    }
+    
+    .card:hover {
         transform: translateY(-5px);
-        transition: all 0.3s ease;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
     }
     
-    .quick-action-btn {
-        position: absolute;
-        top: -15px;
-        right: -15px;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    .progress {
+        border-radius: 0.35rem;
     }
     
-    .stat-card {
-        border-left: 4px solid;
-        transition: all 0.3s ease;
-        height: 100%;
+    .progress-bar {
+        border-radius: 0.35rem;
     }
-    
-    .stat-card:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .border-primary { border-color: #0d6efd !important; }
-    .border-success { border-color: #198754 !important; }
-    .border-info { border-color: #0dcaf0 !important; }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add active class to current nav link
+    const currentUrl = window.location.pathname;
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentUrl) {
+            link.classList.add('active');
+        }
+    });
+});
+</script>
 {% endblock %}

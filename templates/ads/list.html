@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}إدارة الإعلانات - RaFiKNi{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>إدارة الإعلانات</h2>
+        <a href="{% url 'create_ad' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> إعلان جديد
+        </a>
+    </div>
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>الصورة</th>
+                            <th>العنوان</th>
+                            <th>الحالة</th>
+                            <th>تاريخ البدء</th>
+                            <th>تاريخ الانتهاء</th>
+                            <th>مميز</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ad in ads %}
+                        <tr>
+                            <td>
+                                <img src="{{ ad.image.url }}" class="img-thumbnail" width="80" alt="{{ ad.title }}">
+                            </td>
+                            <td>{{ ad.title }}</td>
+                            <td>
+                                {% if ad.is_active %}
+                                <span class="badge bg-success">نشط</span>
+                                {% else %}
+                                <span class="badge bg-secondary">غير نشط</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ ad.start_date|date:"Y/m/d" }}</td>
+                            <td>{{ ad.end_date|date:"Y/m/d" }}</td>
+                            <td>
+                                {% if ad.is_featured %}
+                                <i class="fas fa-check text-success"></i>
+                                {% else %}
+                                <i class="fas fa-times text-danger"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'edit_ad' ad.id %}" class="btn btn-outline-primary" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'toggle_ad' ad.id %}" class="btn btn-outline-{% if ad.is_active %}danger{% else %}success{% endif %}" title="{% if ad.is_active %}تعطيل{% else %}تفعيل{% endif %}">
+                                        {% if ad.is_active %}
+                                        <i class="fas fa-eye-slash"></i>
+                                        {% else %}
+                                        <i class="fas fa-eye"></i>
+                                        {% endif %}
+                                    </a>
+                                    <form method="post" action="{% url 'delete_ad' ad.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger" title="حذف" onclick="return confirm('هل أنت متأكد من حذف هذا الإعلان؟')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-ad fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">لا توجد إعلانات مسجلة</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
