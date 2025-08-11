@@ -613,43 +613,33 @@ def request_consultation(request, consultant_id):
 def book_consultation(request, slot_id):
     slot = get_object_or_404(ConsultationSlot, id=slot_id)
 
-    # تحقق من عدم حجز الموعد مسبقًا
+    # تحقق من عدم الحجز المسبق
     if slot.is_booked:
         messages.warning(request, "هذا الموعد محجوز بالفعل.")
-        return redirect("browse_consultants")  # <-- fix here
-
-    # جلب الخدمة المرتبطة بالموعد
-    if hasattr(slot, "service") and slot.service:
-        service = slot.service
-    else:
-        messages.error(request, "لا توجد خدمة مرتبطة بهذا الموعد.")
-        return redirect("browse_consultants")  # <-- fix here
+        return redirect("browse_consultants")
 
     if request.method == "POST":
         form = ConsultationForm(request.POST)
         if form.is_valid():
             consultation = Consultation(
                 slot=slot,
-                service=service,  # مهم: تعيين الخدمة
                 user=request.user,
                 status="confirmed",
                 notes=form.cleaned_data.get("notes", "")
             )
             consultation.save()
 
-            # تحديث حالة الموعد إلى محجوز
             slot.is_booked = True
             slot.save()
 
-            messages.success(request, "تم حجز الموعد بنجاح.")
-            return redirect("browse_consultants")  # <-- fix here
+            messages.success(request, "تم حجز المستشار بنجاح.")
+            return redirect("consultations_list")  # أو الصفحة التي تريد العودة إليها
     else:
         form = ConsultationForm()
 
     return render(request, "book.html", {
         "slot": slot,
-        "form": form,
-        "service": service
+        "form": form
     })
 
 # ---- نظام الإشعارات ---- #
