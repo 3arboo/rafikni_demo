@@ -624,7 +624,6 @@ def book_consultation(request, slot_id):
             consultation = Consultation(
                 slot=slot,
                 client=client,  # الاسم الصحيح من الموديل
-                service=None,         # أو مرر الخدمة إذا كانت موجودة
                 status=Consultation.Status.CONFIRMED,
                 notes=form.cleaned_data.get("notes", "")
             )
