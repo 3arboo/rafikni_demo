@@ -642,7 +642,7 @@ def book_consultation(request, slot_id):
             slot.save()
 
             messages.success(request, "تم حجز الموعد بنجاح.")
-            return redirect("consultations_list")
+            return redirect("consultants_list")
     else:
         form = ConsultationForm()
 
