@@ -616,14 +616,14 @@ def book_consultation(request, slot_id):
     # تحقق من عدم حجز الموعد مسبقًا
     if slot.is_booked:
         messages.warning(request, "هذا الموعد محجوز بالفعل.")
-        return redirect("consultants_list")
+        return redirect("browse_consultants")  # <-- fix here
 
     # جلب الخدمة المرتبطة بالموعد
     if hasattr(slot, "service") and slot.service:
         service = slot.service
     else:
         messages.error(request, "لا توجد خدمة مرتبطة بهذا الموعد.")
-        return redirect("consultants_list")
+        return redirect("browse_consultants")  # <-- fix here
 
     if request.method == "POST":
         form = ConsultationForm(request.POST)
@@ -642,7 +642,7 @@ def book_consultation(request, slot_id):
             slot.save()
 
             messages.success(request, "تم حجز الموعد بنجاح.")
-            return redirect("consultants_list")
+            return redirect("browse_consultants")  # <-- fix here
     else:
         form = ConsultationForm()
 
