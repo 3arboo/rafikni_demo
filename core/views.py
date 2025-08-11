@@ -613,6 +613,7 @@ def request_consultation(request, consultant_id):
 def book_consultation(request, slot_id):
     slot = get_object_or_404(ConsultationSlot, id=slot_id)
     client = request.user
+
     # تحقق من عدم الحجز المسبق
     if slot.is_booked:
         messages.warning(request, "هذا الموعد محجوز بالفعل.")
@@ -621,20 +622,33 @@ def book_consultation(request, slot_id):
     if request.method == "POST":
         form = ConsultationForm(request.POST)
         if form.is_valid():
-            consultation = Consultation(
-                slot=slot,
-                client=client,  # الاسم الصحيح من الموديل
-                status=Consultation.Status.CONFIRMED,
-                notes=form.cleaned_data.get("notes", "")
-            )
-            consultation.save()
+            with transaction.atomic():  # استخدام المعاملات لضمان تناسق البيانات
+                # إنشاء الاستشارة
+                consultation = Consultation(
+                    slot=slot,
+                    client=client,
+                    status=Consultation.Status.CONFIRMED,
+                    notes=form.cleaned_data.get("notes", "")
+                )
+                consultation.save()
 
-            messages.success(request, "تم حجز المستشار بنجاح.")
-            return redirect("consultation_list")  # تأكد أن هذا الـ URL موجود
+                # تحديث حالة الموعد
+                slot.is_booked = True
+                slot.save()
+
+                # إنشاء إشعار للمستشار
+                Notification.objects.create(
+                    user=slot.provider,
+                    message=f"تم حجز موعد استشارة جديد من {client.full_name}",
+                    link=f"/consultations/{consultation.id}/"
+                )
+
+            messages.success(request, "تم حجز الموعد بنجاح.")
+            return redirect("consultation_list")
     else:
         form = ConsultationForm()
 
-    return render(request, "book.html", {
+    return render(request, "consultations/book.html", {
         "slot": slot,
         "form": form
     })
