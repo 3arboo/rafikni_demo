@@ -13,7 +13,7 @@ from .models import (
 from .forms import (
     UserRegistrationForm, UserLoginForm,
     ProfileForm, ServiceForm, ConsultationSlotForm,
-    DocumentForm, ReviewForm, ConsultationRequestForm  ,ConsultantForm ,UserForm
+    DocumentForm, ReviewForm, ConsultationRequestForm  ,ConsultantForm ,UserForm ,ConsultationForm
 )
 from django.utils.text import slugify
 import uuid
@@ -614,26 +614,34 @@ def book_consultation(request, slot_id):
     slot = get_object_or_404(ConsultationSlot, id=slot_id, is_booked=False)
     
     if request.method == 'POST':
-        # احصل على الخدمة من مكان ما (مثلاً من النموذج)
-        service_id = request.POST.get('service_id')
-        service = get_object_or_404(Service, id=service_id)
-        
-        consultation = Consultation.objects.create(
-            slot=slot,
-            client=request.user,
-            service=service,  # تأكد من تمرير الخدمة
-            status=Consultation.Status.CONFIRMED
-        )
-        
-        messages.success(request, 'تم حجز الاستشارة بنجاح')
-        return redirect('consultations')
-    
-    # عرض النموذج مع قائمة الخدمات المتاحة
-    services = Service.objects.filter(provider=slot.provider)
-    return render(request, 'book_consultation.html', {
+        form = ConsultationForm(request.POST)
+        if form.is_valid():
+            consultation = form.save(commit=False)
+            consultation.slot = slot
+            consultation.client = request.user
+            consultation.status = Consultation.Status.CONFIRMED
+            
+            # إذا كان لازم تعبئة الـ service (لتجنب الخطأ إذا كان required)
+            if Consultation._meta.get_field('service').blank is False:
+                default_service = Service.objects.filter(provider=slot.provider).first()
+                consultation.service = default_service
+
+            consultation.save()
+            
+            # تحديث حالة الموعد
+            slot.is_booked = True
+            slot.save()
+            
+            messages.success(request, 'تم حجز الاستشارة بنجاح')
+            return redirect('consultations')
+    else:
+        form = ConsultationForm()
+
+    return render(request, 'consultation/book.html', {
         'slot': slot,
-        'services': services
+        'form': form
     })
+
 
 # ---- نظام الإشعارات ---- #
 @login_required

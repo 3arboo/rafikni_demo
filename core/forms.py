@@ -324,3 +324,19 @@ class UserForm(forms.ModelForm):
             'email': _('البريد الإلكتروني'),
             'phone': _('رقم الهاتف'),
         }
+
+
+class ConsultationForm(forms.ModelForm):
+    class Meta:
+        model = Consultation
+        fields = ['notes']  # تجاهل حقل service
+        widgets = {
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'أدخل أي ملاحظات أو تفاصيل إضافية...'
+            }),
+        }
+        labels = {
+            'notes': 'ملاحظات الاستشارة'
+        }
