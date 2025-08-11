@@ -1,7 +1,4 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}طلب استشارة جديدة{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -9,40 +6,25 @@
         <div class="col-md-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">طلب استشارة جديدة</h5>
+                    <h5 class="mb-0">طلب استشارة مع {{ consultant.user.get_full_name }}</h5>
                 </div>
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
                         
-                        <!-- حقل اختيار المستشار -->
+                        <!-- حقل السؤال فقط -->
                         <div class="mb-3">
-                            <label class="form-label">{{ form.consultant.label }}</label>
-                            {{ form.consultant }}
-                            {% if form.consultant.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.consultant.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- حقل السؤال -->
-                        <div class="mb-3">
-                            <label class="form-label">{{ form.question.label }}</label>
+                            <label class="form-label">سؤالك أو استفسارك</label>
                             {{ form.question }}
                             {% if form.question.errors %}
                                 <div class="text-danger">
-                                    {% for error in form.question.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+                                    {{ form.question.errors }}
                                 </div>
                             {% endif %}
                         </div>
                         
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'consultation_list' %}" class="btn btn-secondary">إلغاء</a>
+                            <a href="{% url 'browse_consultants' %}" class="btn btn-secondary">إلغاء</a>
                             <button type="submit" class="btn btn-primary">إرسال الطلب</button>
                         </div>
                     </form>
@@ -51,74 +33,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-$(document).ready(function() {
-    // تهيئة Select2 لحقل المستشارين
-    $('#id_consultant').select2({
-        placeholder: "ابحث واختر مستشاراً",
-        allowClear: true,
-        language: {
-            noResults: function() {
-                return "لا توجد نتائج";
-            }
-        },
-        templateResult: formatConsultant,
-        templateSelection: formatConsultantSelection
-    });
-    
-    // تنسيق عرض المستشارين في القائمة
-    function formatConsultant(consultant) {
-        if (!consultant.id) return consultant.text;
-        
-        var $container = $(
-            '<div class="d-flex align-items-center">' +
-                '<div class="flex-shrink-0 me-3">' +
-                    '<img class="consultant-img" />' +
-                '</div>' +
-                '<div class="flex-grow-1">' +
-                    '<div class="consultant-name"></div>' +
-                    '<div class="consultant-bio small text-muted"></div>' +
-                '</div>' +
-            '</div>'
-        );
-        
-        // استخدام الصورة إذا كانت متاحة
-        var imgSrc = $(consultant.element).data('image');
-        $container.find('.consultant-img').attr('src', imgSrc || '{% static "images/default-avatar.png" %}');
-        $container.find('.consultant-img').addClass('rounded-circle').attr('width', '40').attr('height', '40');
-        
-        $container.find('.consultant-name').text(consultant.text);
-        
-        // استخدام البايو إذا كان متاحاً
-        var bio = $(consultant.element).data('bio');
-        $container.find('.consultant-bio').text(bio || 'مستشار متخصص');
-        
-        return $container;
-    }
-    
-    // تنسيق عرض المستشار المحدد
-    function formatConsultantSelection(consultant) {
-        if (!consultant.id) return consultant.text;
-        
-        var $container = $(
-            '<div class="d-flex align-items-center">' +
-                '<div class="flex-shrink-0 me-2">' +
-                    '<img class="consultant-img" width="30" height="30" />' +
-                '</div>' +
-                '<div class="flex-grow-1 consultant-name"></div>' +
-            '</div>'
-        );
-        
-        var imgSrc = $(consultant.element).data('image');
-        $container.find('.consultant-img').attr('src', imgSrc || '{% static "images/default-avatar.png" %}');
-        $container.find('.consultant-img').addClass('rounded-circle');
-        $container.find('.consultant-name').text(consultant.text);
-        
-        return $container;
-    }
-});
-</script>
 {% endblock %}

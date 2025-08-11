@@ -542,26 +542,25 @@ def request_consultation(request, consultant_id):
     if request.method == 'POST':
         form = ConsultationRequestForm(request.POST)
         if form.is_valid():
-            consultation = form.save(commit=False)
-            consultation.client = request.user
-            consultation.consultant = consultant.user
-            consultation.save()
+            consultation_request = form.save(commit=False)
+            consultation_request.client = request.user
+            consultation_request.consultant = consultant.user
+            consultation_request.save()
             
-            # إرسال إشعار للمستشار
             Notification.objects.create(
                 user=consultant.user,
-                message=f"لديك طلب استشارة جديد من {request.user.full_name}",
-                link=f"/consultations/{consultation.id}/"
+                message=f"طلب استشارة جديد من {request.user.full_name}",
+                link=f"/consultations/{consultation_request.id}/"
             )
             
-            messages.success(request, 'تم إرسال طلب الاستشارة بنجاح!')
+            messages.success(request, 'تم إرسال الطلب بنجاح!')
             return redirect('consultation_list')
     else:
-        form = ConsultationRequestForm(initial={'consultant': consultant.user})
+        form = ConsultationRequestForm()  # لا حاجة لـ initial هنا
     
     return render(request, 'consultations/request.html', {
         'form': form,
-        'consultant': consultant
+        'consultant': consultant  # يمكنك استخدامه في القالب
     })
 
 @login_required

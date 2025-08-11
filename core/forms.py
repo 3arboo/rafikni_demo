@@ -217,34 +217,16 @@ class ReviewForm(forms.ModelForm):
         }
 
 class ConsultationRequestForm(forms.ModelForm):
-    # أضف حقل الخدمة كحقل اختيار
-    service = forms.ModelChoiceField(
-        queryset=Service.objects.none(),  # سنحدده في الدالة __init__
-        label=_('الخدمة'),
-        required=True,
-        widget=forms.Select(attrs={
-            'class': 'form-select'
-        })
-    )
-    
     class Meta:
         model = ConsultationRequest
-        fields = ('service', 'question')
-        labels = {
-            'question': _('سؤالك أو استفسارك'),
-        }
+        fields = ('question',)  # أزل service إذا لم يكن موجوداً في النموذج
         widgets = {
             'question': forms.Textarea(attrs={
                 'rows': 5,
-                'placeholder': _('صف مشكلتك أو استفسارك بالتفصيل...'),
-                'class': 'form-control'
+                'class': 'form-control',
+                'placeholder': 'صف مشكلتك بالتفصيل...'
             }),
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # تحديث queryset ليشمل فقط الخدمات النشطة
-        self.fields['service'].queryset = Service.objects.filter(is_active=True)
 
 
 class BookSlotForm(forms.ModelForm):

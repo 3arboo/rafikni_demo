@@ -6,7 +6,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>استشاراتي</h2>
         {% if user.role == 'client' %}
-        <a href="{% url 'consultants_list' %}" class="btn btn-primary">
+        <a href="{% url 'browse_consultants' %}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>طلب استشارة جديدة
         </a>
         {% endif %}
