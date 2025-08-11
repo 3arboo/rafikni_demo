@@ -612,7 +612,7 @@ def request_consultation(request, consultant_id):
 @login_required
 def book_consultation(request, slot_id):
     slot = get_object_or_404(ConsultationSlot, id=slot_id)
-
+    client = request.user
     # تحقق من عدم الحجز المسبق
     if slot.is_booked:
         messages.warning(request, "هذا الموعد محجوز بالفعل.")
@@ -623,17 +623,15 @@ def book_consultation(request, slot_id):
         if form.is_valid():
             consultation = Consultation(
                 slot=slot,
-                client=request.user,  # <-- fix here
-                status="confirmed",
+                client=client,  # الاسم الصحيح من الموديل
+                service=None,         # أو مرر الخدمة إذا كانت موجودة
+                status=Consultation.Status.CONFIRMED,
                 notes=form.cleaned_data.get("notes", "")
             )
             consultation.save()
 
-            slot.is_booked = True
-            slot.save()
-
             messages.success(request, "تم حجز المستشار بنجاح.")
-            return redirect("consultation_list")  # تأكد من اسم الـ url هنا
+            return redirect("consultation_list")  # تأكد أن هذا الـ URL موجود
     else:
         form = ConsultationForm()
 
@@ -641,6 +639,7 @@ def book_consultation(request, slot_id):
         "slot": slot,
         "form": form
     })
+
 
 # ---- نظام الإشعارات ---- #
 @login_required
