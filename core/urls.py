@@ -22,7 +22,7 @@ urlpatterns = [
     path('services/', views.service_list, name='service_list'),
     path('services/create/', views.create_service, name='create_service'),
     path('services/update/<int:pk>/', views.update_service, name='update_service'),
-    
+    path('service/<int:pk>/', views.service_detail, name='service_detail'),
     # Consultation Slot URLs
     path('slots/', views.slot_list, name='slot_list'),
     path('slots/create/', views.create_slot, name='create_slot'),

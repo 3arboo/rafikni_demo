@@ -859,3 +859,7 @@ def edit_consultant(request):
         form = ConsultantForm(instance=consultant, initial=initial_data)
     
     return render(request, 'consultants/edit.html', {'form': form})
+
+def service_detail(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    return render(request, 'services/detail.html', {'service': service})
