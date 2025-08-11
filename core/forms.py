@@ -245,57 +245,7 @@ class BookSlotForm(forms.ModelForm):
             consultation.save()
         return consultation
 # forms.py
-class ConsultantForm(forms.ModelForm):
-    # الحقول الإضافية لأيام الأسبوع
-    saturday = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control working-hours-input',
-            'placeholder': 'مثال: 09:00 - 17:00'
-        })
-    )
-    sunday = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control working-hours-input',
-            'placeholder': 'مثال: 09:00 - 17:00'
-        })
-    )
-    monday = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control working-hours-input',
-            'placeholder': 'مثال: 09:00 - 17:00'
-        })
-    )
-    tuesday = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control working-hours-input',
-            'placeholder': 'مثال: 09:00 - 17:00'
-        })
-    )
-    wednesday = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control working-hours-input',
-            'placeholder': 'مثال: 09:00 - 17:00'
-        })
-    )
-    thursday = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control working-hours-input',
-            'placeholder': 'مثال: 09:00 - 17:00'
-        })
-    )
-    friday = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control working-hours-input',
-            'placeholder': 'مثال: 09:00 - 17:00'
-        })
-    )
+
 
 from django import forms
 from .models import Consultant
@@ -364,3 +314,13 @@ class ConsultantForm(forms.ModelForm):
             consultant.save()
             self.save_m2m()
         return consultant
+
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('full_name', 'email', 'phone')
+        labels = {
+            'full_name': _('الاسم الكامل'),
+            'email': _('البريد الإلكتروني'),
+            'phone': _('رقم الهاتف'),
+        }

@@ -60,7 +60,6 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
     }
-    /* تحسين عرض حقول النموذج */
     .form-row {
         display: flex;
         flex-wrap: wrap;
@@ -79,7 +78,6 @@
             max-width: 50%;
         }
     }
-    /* تحسين عرض الصورة */
     .image-preview {
         width: 150px;
         height: 150px;
@@ -114,6 +112,25 @@
     .custom-file-label:hover {
         background-color: #e9ecef;
     }
+    .category-checkbox {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .category-checkbox input {
+        margin-left: 8px;
+    }
+    .provider-section {
+        border-top: 2px solid #f0f0f0;
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .provider-header {
+        color: #3a0ca3;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
 </style>
 
 <div class="container py-5 profile-edit-container">
@@ -131,8 +148,8 @@
                         
                         <!-- صورة الملف الشخصي -->
                         <div class="form-group text-center">
-                            {% if form.instance.profile_image %}
-                                <img src="{{ form.instance.profile_image.url }}" class="image-preview" id="imagePreview" alt="صورة الملف الشخصي">
+                            {% if profile_form.instance.profile_image %}
+                                <img src="{{ profile_form.instance.profile_image.url }}" class="image-preview" id="imagePreview" alt="صورة الملف الشخصي">
                             {% else %}
                                 <img src="{% static 'images/default-avatar.png' %}" class="image-preview" id="imagePreview" alt="صورة افتراضية">
                             {% endif %}
@@ -140,29 +157,123 @@
                                 <button type="button" class="custom-file-label">
                                     <i class="fas fa-camera me-2"></i> تغيير الصورة
                                 </button>
-                                {{ form.profile_image }}
+                                {{ profile_form.profile_image }}
                             </div>
                         </div>
                         
+                        <!-- معلومات المستخدم الأساسية -->
                         <div class="form-row">
-                            <!-- الحقول الأساسية -->
-                            {% for field in form %}
-                                {% if field.name != 'profile_image' %}
-                                <div class="form-col">
-                                    <div class="form-group">
-                                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {{ field }}
-                                        {% if field.help_text %}
-                                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                                        {% endif %}
-                                        {% for error in field.errors %}
-                                            <div class="invalid-feedback d-block">{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
+                            <!-- الاسم الكامل -->
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="{{ user_form.full_name.id_for_label }}">الاسم الكامل</label>
+                                    {{ user_form.full_name }}
+                                    {% for error in user_form.full_name.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
                                 </div>
-                                {% endif %}
-                            {% endfor %}
+                            </div>
+                            
+                            <!-- البريد الإلكتروني -->
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="{{ user_form.email.id_for_label }}">البريد الإلكتروني</label>
+                                    {{ user_form.email }}
+                                    {% for error in user_form.email.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- رقم الهاتف -->
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="{{ user_form.phone.id_for_label }}">رقم الهاتف</label>
+                                    {{ user_form.phone }}
+                                    {% for error in user_form.phone.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- نبذة عنك -->
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="{{ profile_form.bio.id_for_label }}">نبذة عنك</label>
+                                    {{ profile_form.bio }}
+                                    {% for error in profile_form.bio.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- العنوان -->
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="{{ profile_form.address.id_for_label }}">العنوان</label>
+                                    {{ profile_form.address }}
+                                    {% for error in profile_form.address.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- الموقع الإلكتروني -->
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="{{ profile_form.website.id_for_label }}">الموقع الإلكتروني</label>
+                                    {{ profile_form.website }}
+                                    {% for error in profile_form.website.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
+                        
+                        <!-- قسم المستشارين فقط -->
+                        {% if is_provider %}
+                        <div class="provider-section">
+                            <h4 class="provider-header">
+                                <i class="fas fa-user-tie me-2"></i> معلومات المستشار
+                            </h4>
+                            
+                            <!-- التصنيفات -->
+                            <div class="form-group">
+                                <label>التصنيفات المتخصص بها:</label>
+                                <div class="row">
+                                    {% for category in consultant_form.categories.field.queryset %}
+                                    <div class="col-md-4 mb-3">
+                                        <div class="category-checkbox">
+                                            <input type="checkbox" 
+                                                   name="categories" 
+                                                   value="{{ category.id }}"
+                                                   id="category-{{ category.id }}"
+                                                   {% if category in consultant_form.instance.categories.all %}checked{% endif %}>
+                                            <label for="category-{{ category.id }}">
+                                                {{ category.name }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% for error in consultant_form.categories.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- السيرة الذاتية للمستشار -->
+                            <div class="form-group">
+                                <label for="{{ consultant_form.bio.id_for_label }}">السيرة الذاتية (للمستشارين)</label>
+                                {{ consultant_form.bio }}
+                                {% for error in consultant_form.bio.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                                <small class="form-text text-muted">
+                                    هذه المعلومات ستظهر للعملاء عند استشارتهم لك
+                                </small>
+                            </div>
+                        </div>
+                        {% endif %}
                         
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'profile' %}" class="btn btn-cancel">

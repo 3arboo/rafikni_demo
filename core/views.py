@@ -13,7 +13,7 @@ from .models import (
 from .forms import (
     UserRegistrationForm, UserLoginForm,
     ProfileForm, ServiceForm, ConsultationSlotForm,
-    DocumentForm, ReviewForm, ConsultationRequestForm  ,ConsultantForm
+    DocumentForm, ReviewForm, ConsultationRequestForm  ,ConsultantForm ,UserForm
 )
 from django.utils.text import slugify
 import uuid
@@ -103,21 +103,67 @@ def switch_role(request):
         messages.success(request, f'تم التبديل إلى {request.user.get_role_display()}')
     return redirect('dashboard')
 
+
+    
 @login_required
 def edit_profile(request):
+    # الحصول على أو إنشاء الملف الشخصي للمستخدم
     profile, created = Profile.objects.get_or_create(user=request.user)
+    user = request.user
     
+    # إعداد بيانات المستشار إذا كان المستخدم مقدم خدمة
+    consultant = None
+    if user.role == User.Role.PROVIDER:
+        consultant, created = Consultant.objects.get_or_create(user=user)
+        # إذا كان مستشاراً جديداً، نضيف بعض التصنيفات الافتراضية إذا لزم الأمر
+        if created:
+            default_categories = ServiceCategory.objects.filter(is_default=True)
+            if default_categories.exists():
+                consultant.categories.set(default_categories)
+
     if request.method == 'POST':
-        form = ProfileForm(request.POST, request.FILES, instance=profile)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'تم تحديث الملف الشخصي بنجاح!')
+        user_form = UserForm(request.POST, instance=user)
+        profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
+        consultant_form = ConsultantForm(request.POST, instance=consultant) if user.role == User.Role.PROVIDER else None
+
+        # التحقق من صحة النماذج
+        forms_valid = all([
+            user_form.is_valid(),
+            profile_form.is_valid(),
+            consultant_form.is_valid() if consultant_form else True
+        ])
+
+        if forms_valid:
+            # حفظ بيانات المستخدم والملف الشخصي
+            user = user_form.save()
+            profile = profile_form.save()
+            
+            # حفظ بيانات المستشار إذا كان مقدم خدمة
+            if user.role == User.Role.PROVIDER and consultant_form:
+                consultant = consultant_form.save(commit=False)
+                consultant.user = user
+                consultant.save()
+                consultant_form.save_m2m()  # مهم لحفظ علاقات many-to-many مثل التصنيفات
+            
+            messages.success(request, 'تم تحديث الملف الشخصي بنجاح')
             return redirect('profile')
+
     else:
-        form = ProfileForm(instance=profile)
+        # عرض النماذج في حالة GET
+        user_form = UserForm(instance=user)
+        profile_form = ProfileForm(instance=profile)
+        consultant_form = ConsultantForm(instance=consultant) if user.role == User.Role.PROVIDER else None
 
-    return render(request, 'profile/edit.html', {'form': form})
+    # إعداد البيانات للقالب
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form,
+        'consultant_form': consultant_form,
+        'is_provider': user.role == User.Role.PROVIDER,
+        'all_categories': ServiceCategory.objects.all()  # لإظهار جميع التصنيفات المتاحة
+    }
 
+    return render(request, 'edit_profile.html', context)
 # ---- لوحة التحكم ---- #
 @login_required
 def provider_dashboard(request):
