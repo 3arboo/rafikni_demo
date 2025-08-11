@@ -619,20 +619,29 @@ def book_consultation(request, slot_id):
         messages.warning(request, "هذا الموعد محجوز بالفعل.")
         return redirect("browse_consultants")
 
+    # جلب أول خدمة نشطة للمستشار
+    service = Service.objects.filter(
+        provider=slot.provider,
+        is_active=True
+    ).first()
+
+    if not service:
+        messages.error(request, "لا توجد خدمة متاحة لهذا المستشار.")
+        return redirect("browse_consultants")
+
     if request.method == "POST":
         form = ConsultationForm(request.POST)
         if form.is_valid():
-            with transaction.atomic():  # استخدام المعاملات لضمان تناسق البيانات
-                # إنشاء الاستشارة
+            with transaction.atomic():
                 consultation = Consultation(
                     slot=slot,
                     client=client,
+                    service=service,  # Add the service here
                     status=Consultation.Status.CONFIRMED,
                     notes=form.cleaned_data.get("notes", "")
                 )
                 consultation.save()
 
-                # تحديث حالة الموعد
                 slot.is_booked = True
                 slot.save()
 
@@ -650,7 +659,8 @@ def book_consultation(request, slot_id):
 
     return render(request, "consultations/book.html", {
         "slot": slot,
-        "form": form
+        "form": form,
+        "service": service
     })
 
 

@@ -55,6 +55,19 @@
             </div>
           </div>
 
+          <!-- Add this after the consultant info -->
+          <div class="mb-4">
+            <h6 class="text-muted">الخدمة المختارة:</h6>
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">{{ service.title }}</h5>
+                <p class="card-text text-muted">
+                  السعر: {{ service.price }} دج
+                </p>
+              </div>
+            </div>
+          </div>
+
           {% if slot.is_booked %}
           <div class="alert alert-warning">
             هذا الموعد محجوز حالياً. يرجى اختيار موعد آخر.
