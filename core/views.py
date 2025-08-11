@@ -623,7 +623,7 @@ def book_consultation(request, slot_id):
         if form.is_valid():
             consultation = Consultation(
                 slot=slot,
-                user=request.user,
+                client=request.user,  # <-- fix here
                 status="confirmed",
                 notes=form.cleaned_data.get("notes", "")
             )
@@ -633,7 +633,7 @@ def book_consultation(request, slot_id):
             slot.save()
 
             messages.success(request, "تم حجز المستشار بنجاح.")
-            return redirect("consultations_list")  # أو الصفحة التي تريد العودة إليها
+            return redirect("consultation_list")  # تأكد من اسم الـ url هنا
     else:
         form = ConsultationForm()
 
