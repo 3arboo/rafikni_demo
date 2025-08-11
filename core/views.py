@@ -163,7 +163,7 @@ def edit_profile(request):
         'all_categories': ServiceCategory.objects.all()  # لإظهار جميع التصنيفات المتاحة
     }
 
-    return render(request, 'edit_profile.html', context)
+    return render(request, 'profile/edit.html', context)
 # ---- لوحة التحكم ---- #
 @login_required
 def provider_dashboard(request):
