@@ -613,36 +613,27 @@ def request_consultation(request, consultant_id):
 def book_consultation(request, slot_id):
     slot = get_object_or_404(ConsultationSlot, id=slot_id, is_booked=False)
     
-    # إذا كان الموعد غير متاح (محجوز مسبقًا) أو انتهى وقته
-    if slot.start_time <= timezone.now():
-        messages.error(request, 'عذرًا، هذا الموعد لم يعد متاحًا.')
-        return redirect('consultant_detail', pk=slot.provider.consultant.id)
+    if request.method == 'POST':
+        # احصل على الخدمة من مكان ما (مثلاً من النموذج)
+        service_id = request.POST.get('service_id')
+        service = get_object_or_404(Service, id=service_id)
+        
+        consultation = Consultation.objects.create(
+            slot=slot,
+            client=request.user,
+            service=service,  # تأكد من تمرير الخدمة
+            status=Consultation.Status.CONFIRMED
+        )
+        
+        messages.success(request, 'تم حجز الاستشارة بنجاح')
+        return redirect('consultations')
     
-    # تأكد أن المستخدم الحالي ليس هو مقدم الخدمة
-    if slot.provider == request.user:
-        messages.error(request, 'لا يمكنك حجز موعد خاص بك.')
-        return redirect('consultant_detail', pk=slot.provider.consultant.id)
-    
-    # إنشاء استشارة جديدة
-    consultation = Consultation.objects.create(
-        slot=slot,
-        client=request.user,
-        status=Consultation.Status.CONFIRMED
-    )
-    
-    # تحديث حالة الموعد ليكون محجوزًا
-    slot.is_booked = True
-    slot.save()
-    
-    # إرسال إشعار للمستشار
-    Notification.objects.create(
-        user=slot.provider,
-        message=f"تم حجز موعد جديد من قبل {request.user.full_name}",
-        link=f"/consultations/{consultation.id}/"
-    )
-    
-    messages.success(request, 'تم حجز الموعد بنجاح!')
-    return redirect('consultation_detail', pk=consultation.id)
+    # عرض النموذج مع قائمة الخدمات المتاحة
+    services = Service.objects.filter(provider=slot.provider)
+    return render(request, 'book_consultation.html', {
+        'slot': slot,
+        'services': services
+    })
 
 # ---- نظام الإشعارات ---- #
 @login_required

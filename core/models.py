@@ -160,7 +160,7 @@ class Consultation(models.Model):
     
     slot = models.OneToOneField(ConsultationSlot, on_delete=models.PROTECT)
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_consultations')
-    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    service = models.ForeignKey(Service, on_delete=models.CASCADE , blank=True, null=True)
     notes = models.TextField(blank=True)
     status = models.CharField(
         max_length=20,
