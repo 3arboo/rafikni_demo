@@ -611,37 +611,46 @@ def request_consultation(request, consultant_id):
 
 @login_required
 def book_consultation(request, slot_id):
-    slot = get_object_or_404(ConsultationSlot, id=slot_id, is_booked=False)
-    
-    if request.method == 'POST':
+    slot = get_object_or_404(ConsultationSlot, id=slot_id)
+
+    # تحقق من عدم حجز الموعد مسبقًا
+    if slot.is_booked:
+        messages.warning(request, "هذا الموعد محجوز بالفعل.")
+        return redirect("consultants_list")
+
+    # جلب الخدمة المرتبطة بالموعد
+    if hasattr(slot, "service") and slot.service:
+        service = slot.service
+    else:
+        messages.error(request, "لا توجد خدمة مرتبطة بهذا الموعد.")
+        return redirect("consultants_list")
+
+    if request.method == "POST":
         form = ConsultationForm(request.POST)
         if form.is_valid():
-            consultation = form.save(commit=False)
-            consultation.slot = slot
-            consultation.client = request.user
-            consultation.status = Consultation.Status.CONFIRMED
-            
-            # إذا كان لازم تعبئة الـ service (لتجنب الخطأ إذا كان required)
-            if Consultation._meta.get_field('service').blank is False:
-                default_service = Service.objects.filter(provider=slot.provider).first()
-                consultation.service = default_service
-
+            consultation = Consultation(
+                slot=slot,
+                service=service,  # مهم: تعيين الخدمة
+                user=request.user,
+                status="confirmed",
+                notes=form.cleaned_data.get("notes", "")
+            )
             consultation.save()
-            
-            # تحديث حالة الموعد
+
+            # تحديث حالة الموعد إلى محجوز
             slot.is_booked = True
             slot.save()
-            
-            messages.success(request, 'تم حجز الاستشارة بنجاح')
-            return redirect('consultations')
+
+            messages.success(request, "تم حجز الموعد بنجاح.")
+            return redirect("consultations_list")
     else:
         form = ConsultationForm()
 
-    return render(request, 'consultation/book.html', {
-        'slot': slot,
-        'form': form
+    return render(request, "book.html", {
+        "slot": slot,
+        "form": form,
+        "service": service
     })
-
 
 # ---- نظام الإشعارات ---- #
 @login_required

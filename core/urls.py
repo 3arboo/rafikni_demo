@@ -70,7 +70,7 @@ urlpatterns = [
     path('consultant/<int:pk>/', views.consultant_detail, name='consultant_detail'),
     
     # حجز الموعد
-path('book/<int:slot_id>/', views.book_consultation, name='book_consultation'),
+    path('book/<int:slot_id>/', views.book_consultation, name='book_consultation'),
     
     # تفاصيل الاستشارة
     path('consultation/<int:pk>/', views.consultation_detail, name='consultation_detail'),

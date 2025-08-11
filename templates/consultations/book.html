@@ -5,14 +5,14 @@
 
 {% block content %}
 <div class="container py-5">
-  <!-- Messages -->
+
   {% if messages %}
     <div class="row justify-content-center">
       <div class="col-md-8">
         {% for message in messages %}
           <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
             {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>
         {% endfor %}
       </div>
@@ -22,71 +22,53 @@
   <div class="row justify-content-center">
     <div class="col-md-8">
       <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
-          <h5 class="mb-0"><i class="fas fa-calendar-plus me-2"></i>حجز موعد استشارة</h5>
-          <small class="text-white-50">تحقق من تفاصيل الموعد قبل التأكيد</small>
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">حجز موعد استشارة</h5>
         </div>
 
         <div class="card-body">
-          <!-- Consultant & slot info -->
-          <div class="d-flex align-items-center mb-4 p-3 bg-light rounded">
-            <div class="me-3">
-              {% if slot.provider.profile.profile_image %}
-                <img src="{{ slot.provider.profile.profile_image.url }}" alt="صورة المستشار"
-                     class="rounded-circle" width="90" height="90" style="object-fit:cover;">
-              {% else %}
-                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
-                     style="width:90px;height:90px;">
-                  <i class="fas fa-user fa-2x text-white"></i>
-                </div>
-              {% endif %}
-            </div>
+          <!-- بيانات المستشار -->
+          <div class="d-flex align-items-center mb-4">
+            {% if slot.provider.profile.profile_image %}
+              <img src="{{ slot.provider.profile.profile_image.url }}" alt="صورة"
+                   class="rounded-circle me-3" width="90" height="90" style="object-fit:cover;">
+            {% else %}
+              <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3"
+                   style="width:90px;height:90px;">
+                <i class="fas fa-user fa-2x text-white"></i>
+              </div>
+            {% endif %}
 
-            <div class="flex-grow-1">
+            <div>
               <h5 class="mb-1">{{ slot.provider.full_name }}</h5>
-              {% if slot.provider.profile.bio %}
-                <p class="mb-1 text-muted small">{{ slot.provider.profile.bio|truncatechars:120 }}</p>
-              {% endif %}
-
-              <p class="mb-1 text-muted">
+              <p class="mb-1 text-muted small">
                 <i class="fas fa-clock me-2"></i>
                 {{ slot.start_time|date:"Y-m-d" }} |
                 {{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}
               </p>
-
-              <p class="mb-0 text-muted">
-                <i class="fas fa-star me-2 text-warning"></i>
-                تقييم:
-                {% if slot.provider.consultant %}
-                  {{ slot.provider.consultant.avg_rating|default:"جديد" }}
-                  <small class="text-muted">({{ slot.provider.consultant.review_count }} تقييم)</small>
-                {% else %}
-                  جديد
-                {% endif %}
-              </p>
+              {% if service %}
+                <p class="mb-0 text-muted">
+                  <i class="fas fa-briefcase me-2"></i>
+                  الخدمة: {{ service.name }}
+                </p>
+              {% endif %}
             </div>
           </div>
 
-          <!-- Slot warnings -->
           {% if slot.is_booked %}
             <div class="alert alert-warning">
               هذا الموعد محجوز حالياً. يرجى اختيار موعد آخر.
             </div>
           {% endif %}
 
-          <!-- Form -->
-          <form method="post" novalidate>
+          <!-- فورم الحجز -->
+          <form method="post">
             {% csrf_token %}
-
-            <!-- Example of showing non-editable details (optional) -->
-            <div class="mb-3">
-              <label class="form-label small text-muted">مقدم الاستشارة</label>
-              <div class="form-control-plaintext">{{ slot.provider.full_name }}</div>
-            </div>
+            <input type="hidden" name="service_id" value="{{ service.id }}">
 
             <div class="mb-3">
               <label class="form-label" for="{{ form.notes.id_for_label }}">
-                <i class="fas fa-edit me-2"></i> {{ form.notes.label }}
+                {{ form.notes.label }}
               </label>
               {{ form.notes }}
               {% if form.notes.errors %}
@@ -94,33 +76,22 @@
                   {{ form.notes.errors.as_text|striptags }}
                 </div>
               {% endif %}
-              <div class="form-text">(اختياري) اذكر أي تفاصيل تريد مناقشتها مع المستشار</div>
             </div>
 
-            <!-- Hidden input: slot id (إذا احتجت إرسالها بدل الاعتماد على URL) -->
-            {# إذا وجهت الـ view ليعتمد على slot_id من الـ URL فلا حاجة لهذا الحقل.
-               لكن تركه كمثال في حال أردت استخدامه: #}
-            {# <input type="hidden" name="slot_id" value="{{ slot.id }}"> #}
-
-            <div class="d-flex justify-content-between mt-4">
+            <div class="d-flex justify-content-between">
               <a href="{% url 'consultants_list' %}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i> رجوع
+                رجوع
               </a>
               {% if not slot.is_booked %}
-                <button type="submit" class="btn btn-primary px-4">
-                  <i class="fas fa-calendar-check me-2"></i> تأكيد الحجز
+                <button type="submit" class="btn btn-primary">
+                  تأكيد الحجز
                 </button>
               {% else %}
-                <button type="button" class="btn btn-secondary px-4" disabled>
-                  محجوز
-                </button>
+                <button type="button" class="btn btn-secondary" disabled>محجوز</button>
               {% endif %}
             </div>
           </form>
-        </div>
 
-        <div class="card-footer text-muted small">
-          تنويه: سيتم تحديث حالة الموعد إلى <strong>محجوز</strong> بعد تأكيد الحجز.
         </div>
       </div>
     </div>
